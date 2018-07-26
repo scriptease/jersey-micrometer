@@ -1,5 +1,18 @@
 [![Build Status](https://travis-ci.com/stefanbirkner/jersey-micrometer.svg?branch=master)](https://travis-ci.com/stefanbirkner/jersey-micrometer)
 
+
+## Installation
+
+Jersey Micrometer is available from
+[Maven Central](https://search.maven.org/#search|ga|1|jersey-micrometer).
+
+    <dependency>
+      <groupId>com.github.stefanbirkner</groupId>
+      <artifactId>jersey-micrometer</artifactId>
+      <version>unpublished</version>
+    </dependency>
+
+
 # What it does
 
 This library uses [Jersey 1](https://jersey.java.net/), [Metrics](http://metrics.codahale.com/) and [Guice](https://code.google.com/p/google-guice/) to simplify gathering performance metrics for your JAX-RS resource methods.
@@ -87,8 +100,27 @@ builder.addConfiguration(new MapConfiguration(config));
 
 ## Development Guide
 
+Jersey Micrometer is build with [Maven](https://maven.apache.org/). If you want
+to contribute code then
+
+* Please write a test for your change.
+* Ensure that you didn't break the build by running `./mvnw verify -Dgpg.skip`.
+* Fork the repo and create a pull request. (See
+[Understanding the GitHub Flow](https://guides.github.com/introduction/flow/index.html))
+
 The basic coding style is described in the
 [EditorConfig](http://editorconfig.org/) file `.editorconfig`.
 
 Jersey Micrometer supports [Travis CI](https://travis-ci.com/) for continuous
 integration. Your pull request will be automatically build by Travis CI.
+
+
+## Release Guide
+
+* Select a new version according to the
+  [Semantic Versioning 2.0.0 Standard](http://semver.org/).
+* Set the new version in `pom.xml` and in the `Installation` section of
+  this readme.
+* Commit the modified `pom.xml` and `README.md`.
+* Run `./mvnw clean deploy` with JDK 8.
+* Add a tag for the release: `git tag jersey-micrometer-X.X.X`

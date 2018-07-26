@@ -1,2 +1,4 @@
 language: java
+install: ./mvnw -DskipTests -Dgpg.skip install
 jdk: oraclejdk8
+script: ./mvnw -Dgpg.skip verify javadoc:javadoc

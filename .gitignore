@@ -1,3 +1,4 @@
+.flattened-pom.xml
 *.iml
 *.ipr
 *.iws
@@ -5,8 +6,6 @@
 ./out
 .DS_Store
 .directory
-.gradle
 .idea
-build
 target
 out
