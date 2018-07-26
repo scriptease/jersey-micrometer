@@ -42,17 +42,13 @@ final class MetricsWrapperFactory implements ResourceMethodDispatchWrapperFactor
 
         Class<?> resourceClass = am.getResource().getResourceClass();
         String metricId = namer.getMetricBaseName(am);
-        final Timer timer = metricsRegistry.timer(MetricRegistry.name(resourceClass, metricId + " timer"));
-        return new ResourceMethodDispatchWrapper() {
-            @Override
-            public void wrapDispatch(Object resource, HttpContext context, ResourceMethodDispatchWrapperChain chain) {
-
-                final Timer.Context time = timer.time();
-                try {
-                    chain.wrapDispatch(resource, context);
-                } finally {
-                    time.stop();
-                }
+        Timer timer = metricsRegistry.timer(MetricRegistry.name(resourceClass, metricId + " timer"));
+        return (resource, context, chain) -> {
+            Timer.Context time = timer.time();
+            try {
+                chain.wrapDispatch(resource, context);
+            } finally {
+                time.stop();
             }
         };
     }
