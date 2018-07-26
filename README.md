@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/stefanbirkner/jersey-micrometer.svg?branch=master)](https://travis-ci.com/stefanbirkner/jersey-micrometer)
+
 # What it does
 
 This library uses [Jersey 1](https://jersey.java.net/), [Metrics](http://metrics.codahale.com/) and [Guice](https://code.google.com/p/google-guice/) to simplify gathering performance metrics for your JAX-RS resource methods.
@@ -82,3 +84,8 @@ ConfigModuleBuilder builder = new ConfigModuleBuilder();
 // read from a map
 builder.addConfiguration(new MapConfiguration(config));
 ```
+
+## Development Guide
+
+Jersey Micrometer supports [Travis CI](https://travis-ci.com/) for continuous
+integration. Your pull request will be automatically build by Travis CI.
