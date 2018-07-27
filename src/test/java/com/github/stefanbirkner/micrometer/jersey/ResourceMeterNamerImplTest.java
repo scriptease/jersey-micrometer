@@ -41,32 +41,32 @@ public final class ResourceMeterNamerImplTest {
     }
 
     @Test
-    public void testGetMetricIdClassWithPathMethodWithoutPath() {
+    public void testMetricIdClassWithPathMethodWithoutPath() {
         AbstractResource resource = new AbstractResource(FooResource.class, new PathValue("/res"));
         AbstractResourceMethod method =
             new AbstractResourceMethod(resource, null, Void.class, Void.class, "GET", new Annotation[]{});
 
-        assertEquals("/res GET", namer.getMeterBaseName(method));
+        assertEquals("/res", namer.getMeterBaseName(method));
     }
 
     @Test
-    public void testGetMetricIdClassWithPathMethodWithPath() {
+    public void testMetricIdClassWithPathMethodWithPath() {
         AbstractResource resource = new AbstractResource(FooResource.class, new PathValue("/res"));
         AbstractResourceMethod method =
             new AbstractSubResourceMethod(resource, null, Void.class, Void.class, new PathValue("/meth"), "GET",
                 new Annotation[]{});
 
-        assertEquals("/res/meth GET", namer.getMeterBaseName(method));
+        assertEquals("/res/meth", namer.getMeterBaseName(method));
     }
 
     @Test
-    public void testGetMetricIdClassWithoutPathMethodWithPath() {
+    public void testMetricIdClassWithoutPathMethodWithPath() {
         AbstractResource resource = new AbstractResource(FooResource.class, null);
         AbstractResourceMethod method =
             new AbstractSubResourceMethod(resource, null, Void.class, Void.class, new PathValue("/meth"), "GET",
                 new Annotation[]{});
 
-        assertEquals("/meth GET", namer.getMeterBaseName(method));
+        assertEquals("/meth", namer.getMeterBaseName(method));
     }
 
     private static void doPathValueTest(

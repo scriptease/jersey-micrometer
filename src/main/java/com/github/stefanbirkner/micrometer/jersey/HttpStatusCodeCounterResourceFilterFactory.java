@@ -12,6 +12,7 @@ import com.sun.jersey.api.model.AbstractSubResourceLocator;
 import com.sun.jersey.spi.container.ResourceFilter;
 import com.sun.jersey.spi.container.ResourceFilterFactory;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,16 +28,19 @@ public final class HttpStatusCodeCounterResourceFilterFactory implements Resourc
     private final JerseyMicrometerConfig jerseyMicrometerConfig;
 
     private final ResourceMeterNamer namer;
+    private final TagsProvider tagsProvider;
     private final MeterRegistry meterRegistry;
 
     @Inject
     HttpStatusCodeCounterResourceFilterFactory(
         JerseyMicrometerConfig jerseyMicrometerConfig,
         ResourceMeterNamer namer,
+        TagsProvider tagsProvider,
         @JerseyResourceMicrometer MeterRegistry meterRegistry
     ) {
         this.jerseyMicrometerConfig = jerseyMicrometerConfig;
         this.namer = namer;
+        this.tagsProvider = tagsProvider;
         this.meterRegistry = meterRegistry;
     }
 
@@ -60,10 +64,11 @@ public final class HttpStatusCodeCounterResourceFilterFactory implements Resourc
             }
 
             String metricBaseName = namer.getMeterBaseName((AbstractResourceMethod) am);
+            Tags tags = tagsProvider.tagsForMethod((AbstractResourceMethod) am);
             Class<?> resourceClass = am.getResource().getResourceClass();
 
             return singletonList(
-                    new HttpStatusCodeCounterResourceFilter(meterRegistry, metricBaseName, resourceClass));
+                    new HttpStatusCodeCounterResourceFilter(meterRegistry, metricBaseName, resourceClass, tags));
         } else {
             logger.warn("Got an unexpected instance of " + am.getClass().getName() + ": " + am);
             return null;

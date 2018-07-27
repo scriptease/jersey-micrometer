@@ -9,6 +9,7 @@ import com.palominolabs.jersey.dispatchwrapper.ResourceMethodDispatchWrapper;
 import com.palominolabs.jersey.dispatchwrapper.ResourceMethodDispatchWrapperFactory;
 import com.sun.jersey.api.model.AbstractResourceMethod;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 
 /**
@@ -21,16 +22,19 @@ final class MicrometerWrapperFactory
     private final JerseyMicrometerConfig jerseyMicrometerConfig;
 
     private final ResourceMeterNamer namer;
+    private TagsProvider tagsProvider;
     private final MeterRegistry meterRegistry;
 
     @Inject
     MicrometerWrapperFactory(
         JerseyMicrometerConfig jerseyMicrometerConfig,
         ResourceMeterNamer namer,
+        TagsProvider tagsProvider,
         @JerseyResourceMicrometer MeterRegistry meterRegistry
     ) {
         this.jerseyMicrometerConfig = jerseyMicrometerConfig;
         this.namer = namer;
+        this.tagsProvider = tagsProvider;
         this.meterRegistry = meterRegistry;
     }
 
@@ -47,7 +51,8 @@ final class MicrometerWrapperFactory
 
         Class<?> resourceClass = am.getResource().getResourceClass();
         String metricId = namer.getMeterBaseName(am);
-        Timer timer = meterRegistry.timer(resourceClass.getName() + "." + metricId + " timer");
+        Tags tags = tagsProvider.tagsForMethod(am);
+        Timer timer = meterRegistry.timer(resourceClass.getName() + "." + metricId + " timer", tags);
         return (resource, context, chain) -> timer.record(
             () -> chain.wrapDispatch(resource, context)
         );

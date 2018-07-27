@@ -24,22 +24,16 @@ final class ResourceMeterNamerImpl implements ResourceMeterNamer {
             metricId = "/" + metricId;
         }
 
-        String httpMethod;
         if (am instanceof AbstractSubResourceMethod) {
             // if this is a subresource, add on the subresource's path component
             AbstractSubResourceMethod asrm = (AbstractSubResourceMethod) am;
             metricId += "/" + getPathWithoutSurroundingSlashes(asrm.getPath());
-            httpMethod = asrm.getHttpMethod();
-        } else {
-            httpMethod = am.getHttpMethod();
         }
 
         if (metricId.isEmpty()) {
             // this happens for WadlResource -- that case actually exists at "application.wadl" though
             metricId = "_no path_";
         }
-
-        metricId += " " + httpMethod;
 
         return metricId;
     }

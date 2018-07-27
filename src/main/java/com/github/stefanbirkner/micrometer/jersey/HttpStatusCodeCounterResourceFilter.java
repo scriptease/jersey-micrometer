@@ -11,6 +11,7 @@ import com.sun.jersey.spi.container.ContainerResponseFilter;
 import com.sun.jersey.spi.container.ResourceFilter;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
 
 import javax.annotation.concurrent.ThreadSafe;
 import java.util.concurrent.ConcurrentHashMap;
@@ -25,6 +26,7 @@ final class HttpStatusCodeCounterResourceFilter implements ResourceFilter, Conta
     private final ConcurrentMap<Integer, Counter> counters = new ConcurrentHashMap<>();
 
     private final Class<?> resourceClass;
+    private final Tags tags;
 
     private final String metricBaseName;
 
@@ -33,11 +35,13 @@ final class HttpStatusCodeCounterResourceFilter implements ResourceFilter, Conta
     HttpStatusCodeCounterResourceFilter(
         MeterRegistry meterRegistry,
         String metricBaseName,
-        Class<?> resourceClass
+        Class<?> resourceClass,
+        Tags tags
     ) {
         this.meterRegistry = meterRegistry;
         this.metricBaseName = metricBaseName;
         this.resourceClass = resourceClass;
+        this.tags = tags;
     }
 
     @Override
@@ -61,7 +65,8 @@ final class HttpStatusCodeCounterResourceFilter implements ResourceFilter, Conta
         Counter counter = counters.get(status);
         if (counter == null) {
             Counter potentiallyNewCounter = meterRegistry.counter(
-                resourceClass.getName() + "." + metricBaseName + " " + status + " counter");
+                resourceClass.getName() + "." + metricBaseName + " " + status + " counter",
+                tags);
             Counter existingCounter = counters.putIfAbsent(status, potentiallyNewCounter);
             if (existingCounter != null) {
                 // we lost the race to set that counter, but shouldn't create a duplicate since Metrics.newCounter will do the right thing
