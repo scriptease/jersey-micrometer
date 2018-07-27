@@ -4,7 +4,6 @@
 
 package com.palominolabs.metrics.jersey;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.sun.jersey.api.model.AbstractResourceMethod;
 import com.sun.jersey.api.model.AbstractSubResourceMethod;
 import com.sun.jersey.api.model.PathValue;
@@ -43,7 +42,6 @@ final class ResourceMetricNamerImpl implements ResourceMetricNamer {
         return metricId;
     }
 
-    @VisibleForTesting
     @Nonnull
     static String getPathWithoutSurroundingSlashes(@Nullable PathValue pathValue) {
         if (pathValue == null) {

@@ -4,7 +4,6 @@ import com.codahale.metrics.ConsoleReporter;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
-import com.google.common.collect.Sets;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -38,14 +37,11 @@ import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import java.io.IOException;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.SortedMap;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.LogManager;
 
+import static java.util.Collections.singleton;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -131,7 +127,7 @@ public class FullStackTest {
         SortedMap<String, Timer> timers = metricRegistry.getTimers();
 
         // check names
-        Set<String> timerNames = Sets.newHashSet(
+        Set<String> timerNames = singleton(
 
             "com.palominolabs.metrics.jersey.FullStackTest$EnabledOnClass./enabledOnClass GET timer");
 
@@ -139,7 +135,7 @@ public class FullStackTest {
 
         SortedMap<String, Counter> counters = metricRegistry.getCounters();
 
-        Set<String> counterNames = Sets.newHashSet(
+        Set<String> counterNames = singleton(
             "com.palominolabs.metrics.jersey.FullStackTest$EnabledOnClass./enabledOnClass GET 200 counter");
 
         assertEquals(counterNames, counters.keySet());

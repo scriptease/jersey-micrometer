@@ -5,7 +5,6 @@
 package com.palominolabs.metrics.jersey;
 
 import com.codahale.metrics.MetricRegistry;
-import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.sun.jersey.api.model.AbstractMethod;
@@ -17,6 +16,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+
+import static java.util.Collections.singletonList;
 
 @Singleton
 public final class HttpStatusCodeCounterResourceFilterFactory implements ResourceFilterFactory {
@@ -57,8 +58,7 @@ public final class HttpStatusCodeCounterResourceFilterFactory implements Resourc
             String metricBaseName = namer.getMetricBaseName((AbstractResourceMethod) am);
             Class<?> resourceClass = am.getResource().getResourceClass();
 
-            return Lists
-                .<ResourceFilter>newArrayList(
+            return singletonList(
                     new HttpStatusCodeCounterResourceFilter(metricsRegistry, metricBaseName, resourceClass));
         } else {
             logger.warn("Got an unexpected instance of " + am.getClass().getName() + ": " + am);
