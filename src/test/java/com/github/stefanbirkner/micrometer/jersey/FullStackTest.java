@@ -24,11 +24,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import javax.management.AttributeNotFoundException;
-import javax.management.InstanceNotFoundException;
-import javax.management.MBeanException;
-import javax.management.MalformedObjectNameException;
-import javax.management.ReflectionException;
 import javax.servlet.DispatcherType;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -38,7 +33,6 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -98,9 +92,7 @@ public class FullStackTest {
     }
 
     @Test
-    public void testFullStack() throws IOException, ExecutionException, InterruptedException,
-        MalformedObjectNameException, AttributeNotFoundException, MBeanException, ReflectionException,
-        InstanceNotFoundException {
+    public void testFullStack() throws Exception {
         assertEquals(200,
             httpClient.prepareGet("http://localhost:" + PORT + "/enabledOnClass").execute().get().getStatusCode());
 
