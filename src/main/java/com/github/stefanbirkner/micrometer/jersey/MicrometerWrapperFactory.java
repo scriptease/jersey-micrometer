@@ -45,10 +45,10 @@ final class MicrometerWrapperFactory
     public ResourceMethodDispatchWrapper createDispatchWrapper(
         AbstractResourceMethod am
     ) {
-        EnabledState state = MetricAnnotationFeatureResolver.getState(am, new TimingMetricsAnnotationChecker());
+        EnabledState state = MetricAnnotationFeatureResolver.getState(am);
 
         if (state == EnabledState.OFF ||
-            (state == EnabledState.UNSPECIFIED && !jerseyMicrometerConfig.isTimingEnabledByDefault())) {
+            (state == EnabledState.UNSPECIFIED && !jerseyMicrometerConfig.isEnabledByDefault())) {
             return null;
         }
 
@@ -60,8 +60,11 @@ final class MicrometerWrapperFactory
             chain.wrapDispatch(resource, context);
             long duration = currentTimeMillis() - start;
             Timer timer = meterRegistry.timer(
-                resourceClass.getName() + "." + metricId + " timer",
-                tags.and("status", Integer.toString(context.getResponse().getStatus()))
+                resourceClass.getName() + "." + metricId,
+                tags.and(
+                    "status",
+                    Integer.toString(context.getResponse().getStatus())
+                )
             );
             timer.record(duration, MILLISECONDS);
         };

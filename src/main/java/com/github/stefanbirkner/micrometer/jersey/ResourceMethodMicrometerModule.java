@@ -19,6 +19,5 @@ public final class ResourceMethodMicrometerModule
         bind(TagsProvider.class);
 
         bindWrapperFactory(binder(), MicrometerWrapperFactory.class);
-        bind(HttpStatusCodeCounterResourceFilterFactory.class);
     }
 }

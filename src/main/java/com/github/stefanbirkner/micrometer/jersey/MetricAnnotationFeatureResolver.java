@@ -9,20 +9,18 @@ final class MetricAnnotationFeatureResolver {
      * enabled or disabled.
      *
      * @param am      resource method
-     * @param checker checker
      * @return EnabledState.ON if feature enabled, EnabledState.OFF if feature disabled, EnabledState.UNSPECIFIED
      *         otherwise
      */
     static EnabledState getState(
-        AbstractResourceMethod am,
-        MetricsAnnotationChecker checker
+        AbstractResourceMethod am
     ) {
         // check method, then class
         for (ResourceMetrics ann : new ResourceMetrics[]{am.getAnnotation(ResourceMetrics.class), am
             .getResource().getAnnotation(ResourceMetrics.class)}) {
 
             if (ann != null) {
-                if (checker.check(ann)) {
+                if (ann.enabled()) {
                     return EnabledState.ON;
                 } else {
                     return EnabledState.OFF;

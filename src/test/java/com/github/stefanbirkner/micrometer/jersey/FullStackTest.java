@@ -8,10 +8,8 @@ import com.google.inject.servlet.ServletModule;
 import com.ning.http.client.AsyncHttpClient;
 import com.palominolabs.config.ConfigModuleBuilder;
 import com.palominolabs.jersey.dispatchwrapper.ResourceMethodWrappedDispatchModule;
-import com.sun.jersey.api.core.ResourceConfig;
 import com.sun.jersey.guice.JerseyServletModule;
 import com.sun.jersey.guice.spi.container.servlet.GuiceContainer;
-import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
@@ -34,7 +32,7 @@ import javax.ws.rs.Path;
 import java.io.IOException;
 import java.util.*;
 
-import static java.util.Arrays.asList;
+import static java.util.Collections.singleton;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.stream.Collectors.toSet;
 import static org.junit.Assert.assertEquals;
@@ -50,11 +48,6 @@ public class FullStackTest {
     @Before
     public void setUp(
     ) throws Exception {
-        final Map<String, String> initParams = new HashMap<>();
-        initParams.put(ResourceConfig.PROPERTY_RESOURCE_FILTER_FACTORIES,
-            HttpStatusCodeCounterResourceFilterFactory.class.getCanonicalName());
-        initParams.put(ResourceConfig.FEATURE_DISABLE_WADL, "true");
-
         Injector injector = Guice.createInjector(new AbstractModule() {
             @Override
             protected void configure() {
@@ -63,7 +56,7 @@ public class FullStackTest {
                 install(new ServletModule() {
                     @Override
                     protected void configureServlets() {
-                        serve("/*").with(GuiceContainer.class, initParams);
+                        serve("/*").with(GuiceContainer.class);
                     }
                 });
                 install(new JerseyServletModule());
@@ -110,27 +103,20 @@ public class FullStackTest {
             .collect(toSet());
 
         assertEquals(
-            new HashSet<>(asList(
-                "com.github.stefanbirkner.micrometer.jersey.FullStackTest$EnabledOnClass./enabledOnClass timer",
-                "com.github.stefanbirkner.micrometer.jersey.FullStackTest$EnabledOnClass./enabledOnClass counter"
-            )),
+            singleton(
+                "com.github.stefanbirkner.micrometer.jersey.FullStackTest$EnabledOnClass./enabledOnClass"
+            ),
             meterNames
         );
 
         // check values
 
         Timer timer = meterRegistry.timer(
-            "com.github.stefanbirkner.micrometer.jersey.FullStackTest$EnabledOnClass./enabledOnClass timer",
+            "com.github.stefanbirkner.micrometer.jersey.FullStackTest$EnabledOnClass./enabledOnClass",
             "method", "GET",
             "status", "200");
         assertEquals(1, timer.count());
         assertTrue(timer.mean(MILLISECONDS) > 0D);
-
-        Counter counter = meterRegistry.counter(
-            "com.github.stefanbirkner.micrometer.jersey.FullStackTest$EnabledOnClass./enabledOnClass counter",
-            "method", "GET",
-            "status", "200");
-        assertEquals(1d, counter.count(), 0.1d);
     }
 
     private Server getServer(
@@ -168,7 +154,7 @@ public class FullStackTest {
     }
 
     @Path("disabledOnClass")
-    @ResourceMetrics(statusCodeCounter = false, timer = false)
+    @ResourceMetrics(enabled = false)
     public static class DisabledOnClass {
         @GET
         public String get() {
@@ -180,7 +166,7 @@ public class FullStackTest {
     @ResourceMetrics
     public static class EnabledOnClassDisabledOnMethod {
         @GET
-        @ResourceMetrics(statusCodeCounter = false, timer = false)
+        @ResourceMetrics(enabled = false)
         public String get() {
             return "ok";
         }

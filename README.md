@@ -11,7 +11,7 @@ Jersey Micrometer is published under the
 [Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0).
 It requires at least Java 8.
 
-Jersey Micrometer is a port of [Marshall Pierce](https://mpierce.org/)'s
+Jersey Micrometer is a based on [Marshall Pierce](https://mpierce.org/)'s
 [jersey-metrics-filter](https://github.com/palominolabs/jersey-metrics-filter)
 library which uses [Metrics](https://metrics.dropwizard.io) instead of
 Micrometer.
@@ -32,29 +32,30 @@ Jersey Micrometer is available from
 ## Usage
 
 If you have a resource class like this:
-```
-@Path("whatever")
-public class SomeResource {
-    @GET
-    public String get() {
-        return "some data";
+
+    @Path("whatever")
+    public class SomeResource {
+        @GET
+        public String get() {
+            return "some data";
+        }
     }
-}
-```
 
 then by using this library you will get a
 [Timer](https://micrometer.io/docs/concepts#_timers) metric generated for the
-`get()` method, as well as
-[Counters](https://micrometer.io/docs/concepts#_counters) for each status code
-returned by `get()`. In this case, `get()` only returns 200, so you would have
-one counter for status code 200.
+`get()` method. The timers have two tags:
+- `method` contains the HTTP method
+- `status` contains the response's status code
+
+In this case the tag `method` has the value `GET` and the tag `status` has the
+value `200`.
 
 ### Installation
 
 The first step is to add this library's module and its prerequisites.
 - `ResourceMethodMicrometerModule` is the module for this library.
 - `ResourceMethodWrappedDispatchModule` is needed so that method invocation
-times can be captured without resorting to thread locals or other such
+metrics can be captured without resorting to thread locals or other such
 unpleasantness.
 - `ConfigModuleBuilder` is used to assemble the config sources for
 [config-inject](https://github.com/palominolabs/config-inject). If you just
@@ -83,42 +84,20 @@ protected void configure() {
     ...
 ```
 
-Next, you'll want to make sure you're providing init params to the
-`GuiceContainer` servlet that provides Jersey/Guice integration so that HTTP
-status codes can be captured. `HttpStatusCodeCounterResourceFilterFactory`
-registers a Jersey container response filter that feeds outgoing HTTP status
-codes to the appropriate counters.
-```
-// in your Guice module
-...
-final Map<String, String> initParams = new HashMap<>();
-initParams.put(ResourceConfig.PROPERTY_RESOURCE_FILTER_FACTORIES,
-    HttpStatusCodeCounterResourceFilterFactory.class.getCanonicalName());
-
-install(new ServletModule() {
-    @Override
-    protected void configureServlets() {
-        serve("/*").with(GuiceContainer.class, initParams);
-    }
-}
-...
-});
-```
 ### Configuration
 
 At this point, you should now be getting metrics generated for every resource
 method. If you want to use annotations to have more control, you can use
 [`@ResourceMetrics`](https://github.com/stefanbirkner/jersey-micrometer-filter/blob/master/src/main/java/com/github/stefanbirkner/micrometer/jersey/ResourceMetrics.java)
-to turn both timing and status code counters off and on for a class or method.
-In this case below, the method would end up having a timer metric but no status
-code counters.
+to turn metrics off and on for a class or method. In the case below, the method
+would end up having metrics.
 ```
 @Path("somewhere")
-@ResourceMetrics(statusCodeCounter = true, timer = false)
+@ResourceMetrics(enabled = false)
 public class EnabledOnClassDisabledOnMethod {
     // method annotation overrides class annotation
     @GET
-    @ResourceMetrics(statusCodeCounter = false, timer = true)
+    @ResourceMetrics(enabled = true)
     public String get() {
         return "ok";
     }
@@ -126,14 +105,14 @@ public class EnabledOnClassDisabledOnMethod {
 ```
 
 You can also make it so that the default is to *not* create metrics for
-un-annotated classes and methods by setting the properties used in
+un-annotated classes and methods by setting the property used in
 [JerseyMicrometerConfig](https://github.com/stefanbirkner/jersey-micrometer-filter/blob/master/src/main/java/com/github/stefanbirkner/micrometer/jersey/JerseyMicrometerConfig.java).
 You can do this via the `ConfigModuleBuilder`'s config stack. Here, we'll use a
 simple in-code Map to define properties.
 
 ```
 Map<String, Object> config = new HashMap<>();
-config.put("com.github.stefanbirkner.micrometer.jersey.resourceMethod.timer.enabledByDefault", "false");
+config.put("com.github.stefanbirkner.micrometer.jersey.resourceMethod.enabledByDefault", "false");
 
 ConfigModuleBuilder builder = new ConfigModuleBuilder();
 // read from a map

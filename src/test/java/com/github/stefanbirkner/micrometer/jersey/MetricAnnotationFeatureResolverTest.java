@@ -61,7 +61,7 @@ public class MetricAnnotationFeatureResolverTest {
     ) {
         assertEquals(expected,
             MetricAnnotationFeatureResolver
-                .getState(getAbstractMethod(resourceClass, methodAnnotations), new TimingMetricsAnnotationChecker()));
+                .getState(getAbstractMethod(resourceClass, methodAnnotations)));
     }
 
     @Path("/foo")
@@ -69,7 +69,7 @@ public class MetricAnnotationFeatureResolverTest {
 
     }
 
-    @ResourceMetrics(timer = false)
+    @ResourceMetrics(enabled = false)
     private static class FooResourceDisabled {
 
     }
@@ -91,13 +91,8 @@ public class MetricAnnotationFeatureResolverTest {
         }
 
         @Override
-        public boolean timer() {
+        public boolean enabled() {
             return timing;
-        }
-
-        @Override
-        public boolean statusCodeCounter() {
-            return false;
         }
 
         @Override

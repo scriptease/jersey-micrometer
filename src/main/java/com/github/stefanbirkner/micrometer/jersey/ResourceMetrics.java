@@ -14,12 +14,8 @@ import java.lang.annotation.Target;
 public @interface ResourceMetrics {
 
     /**
-     * @return true if timing should be measured for the annotated method (or all methods on the annotated class)
+     * @return true if timing and request count should be measured for the
+     * annotated method (or all methods on the annotated class)
      */
-    boolean timer() default true;
-
-    /**
-     * @return true if status codes be measured for the annotated method (or all methods on the annotated class)
-     */
-    boolean statusCodeCounter() default true;
+    boolean enabled() default true;
 }
