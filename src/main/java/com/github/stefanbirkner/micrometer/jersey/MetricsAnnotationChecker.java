@@ -1,4 +1,4 @@
-package com.palominolabs.metrics.jersey;
+package com.github.stefanbirkner.micrometer.jersey;
 
 /**
  * Abstraction around checking whether a particular feature is enabled on @ResourceMetrics.

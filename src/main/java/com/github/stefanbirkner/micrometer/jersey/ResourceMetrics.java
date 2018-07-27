@@ -2,7 +2,7 @@
  * Copyright (c) 2012 Palomino Labs, Inc.
  */
 
-package com.palominolabs.metrics.jersey;
+package com.github.stefanbirkner.micrometer.jersey;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

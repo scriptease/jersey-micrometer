@@ -2,19 +2,19 @@
  * Copyright (c) 2012 Palomino Labs, Inc.
  */
 
-package com.palominolabs.metrics.jersey;
+package com.github.stefanbirkner.micrometer.jersey;
 
 import com.sun.jersey.api.model.AbstractResource;
 import com.sun.jersey.api.model.AbstractResourceMethod;
 import com.sun.jersey.api.model.AbstractSubResourceMethod;
 import com.sun.jersey.api.model.PathValue;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import javax.ws.rs.Path;
 import java.lang.annotation.Annotation;
 
-import static com.palominolabs.metrics.jersey.ResourceMeterNamerImpl.getPathWithoutSurroundingSlashes;
 import static org.junit.Assert.assertEquals;
 
 public final class ResourceMeterNamerImplTest {
@@ -28,7 +28,7 @@ public final class ResourceMeterNamerImplTest {
 
     @Test
     public void testNullPathValue() {
-        assertEquals("", getPathWithoutSurroundingSlashes(null));
+        Assert.assertEquals("", ResourceMeterNamerImpl.getPathWithoutSurroundingSlashes(null));
     }
 
     @Test
@@ -76,7 +76,7 @@ public final class ResourceMeterNamerImplTest {
     }
 
     private static void doPathValueTest(String expected, String input) {
-        assertEquals(expected, getPathWithoutSurroundingSlashes(new PathValue(input)));
+        Assert.assertEquals(expected, ResourceMeterNamerImpl.getPathWithoutSurroundingSlashes(new PathValue(input)));
     }
 
     @Path("/foo")

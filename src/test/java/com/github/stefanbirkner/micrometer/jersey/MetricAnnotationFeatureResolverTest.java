@@ -1,4 +1,4 @@
-package com.palominolabs.metrics.jersey;
+package com.github.stefanbirkner.micrometer.jersey;
 
 import com.sun.jersey.api.model.AbstractResource;
 import com.sun.jersey.api.model.AbstractResourceMethod;
@@ -7,46 +7,43 @@ import org.junit.Test;
 import javax.ws.rs.Path;
 import java.lang.annotation.Annotation;
 
-import static com.palominolabs.metrics.jersey.EnabledState.OFF;
-import static com.palominolabs.metrics.jersey.EnabledState.ON;
-import static com.palominolabs.metrics.jersey.EnabledState.UNSPECIFIED;
 import static org.junit.Assert.assertEquals;
 
 public class MetricAnnotationFeatureResolverTest {
 
     @Test
     public void testGetStateDefault() {
-        doMethodStateTest(UNSPECIFIED, FooResource.class, new Annotation[0]);
+        doMethodStateTest(EnabledState.UNSPECIFIED, FooResource.class, new Annotation[0]);
     }
 
     @Test
     public void testGetStateMethodEnabled() {
-        doMethodStateTest(ON, FooResource.class, new Annotation[]{new ResourceMetricsImpl(true)});
+        doMethodStateTest(EnabledState.ON, FooResource.class, new Annotation[]{new ResourceMetricsImpl(true)});
     }
 
     @Test
     public void testGetStateMethodDisabled() {
-        doMethodStateTest(OFF, FooResource.class, new Annotation[]{new ResourceMetricsImpl(false)});
+        doMethodStateTest(EnabledState.OFF, FooResource.class, new Annotation[]{new ResourceMetricsImpl(false)});
     }
 
     @Test
     public void testGetStateMethodEnabledClassDisabled() {
-        doMethodStateTest(ON, FooResourceDisabled.class, new Annotation[]{new ResourceMetricsImpl(true)});
+        doMethodStateTest(EnabledState.ON, FooResourceDisabled.class, new Annotation[]{new ResourceMetricsImpl(true)});
     }
 
     @Test
     public void testGetStateMethodDisabledClassEnabled() {
-        doMethodStateTest(OFF, FooResourceEnabled.class, new Annotation[]{new ResourceMetricsImpl(false)});
+        doMethodStateTest(EnabledState.OFF, FooResourceEnabled.class, new Annotation[]{new ResourceMetricsImpl(false)});
     }
 
     @Test
     public void testGetStateClassEnabled() {
-        doMethodStateTest(ON, FooResourceEnabled.class, new Annotation[]{});
+        doMethodStateTest(EnabledState.ON, FooResourceEnabled.class, new Annotation[]{});
     }
 
     @Test
     public void testGetStateClassDisabled() {
-        doMethodStateTest(OFF, FooResourceDisabled.class, new Annotation[]{});
+        doMethodStateTest(EnabledState.OFF, FooResourceDisabled.class, new Annotation[]{});
     }
 
     private static AbstractResourceMethod getAbstractMethod(Class<?> resourceClass, Annotation[] methodAnnotations) {

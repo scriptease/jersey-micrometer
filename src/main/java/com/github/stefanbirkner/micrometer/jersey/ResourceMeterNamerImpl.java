@@ -2,7 +2,7 @@
  * Copyright (c) 2012 Palomino Labs, Inc.
  */
 
-package com.palominolabs.metrics.jersey;
+package com.github.stefanbirkner.micrometer.jersey;
 
 import com.sun.jersey.api.model.AbstractResourceMethod;
 import com.sun.jersey.api.model.AbstractSubResourceMethod;

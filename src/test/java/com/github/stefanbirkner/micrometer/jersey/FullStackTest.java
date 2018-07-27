@@ -1,4 +1,4 @@
-package com.palominolabs.metrics.jersey;
+package com.github.stefanbirkner.micrometer.jersey;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -120,8 +120,8 @@ public class FullStackTest {
 
         assertEquals(
             new HashSet<>(asList(
-                "com.palominolabs.metrics.jersey.FullStackTest$EnabledOnClass./enabledOnClass GET timer",
-                "com.palominolabs.metrics.jersey.FullStackTest$EnabledOnClass./enabledOnClass GET 200 counter"
+                "com.github.stefanbirkner.micrometer.jersey.FullStackTest$EnabledOnClass./enabledOnClass GET timer",
+                "com.github.stefanbirkner.micrometer.jersey.FullStackTest$EnabledOnClass./enabledOnClass GET 200 counter"
             )),
             meterNames
         );
@@ -129,12 +129,12 @@ public class FullStackTest {
         // check values
 
         Timer timer = meterRegistry.timer(
-            "com.palominolabs.metrics.jersey.FullStackTest$EnabledOnClass./enabledOnClass GET timer");
+            "com.github.stefanbirkner.micrometer.jersey.FullStackTest$EnabledOnClass./enabledOnClass GET timer");
         assertEquals(1, timer.count());
         assertTrue(timer.mean(MILLISECONDS) > 0D);
 
         Counter counter = meterRegistry.counter(
-            "com.palominolabs.metrics.jersey.FullStackTest$EnabledOnClass./enabledOnClass GET 200 counter");
+            "com.github.stefanbirkner.micrometer.jersey.FullStackTest$EnabledOnClass./enabledOnClass GET 200 counter");
         assertEquals(1d, counter.count(), 0.1d);
     }
 

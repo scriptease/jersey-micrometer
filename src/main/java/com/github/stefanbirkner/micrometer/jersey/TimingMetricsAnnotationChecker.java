@@ -1,4 +1,4 @@
-package com.palominolabs.metrics.jersey;
+package com.github.stefanbirkner.micrometer.jersey;
 
 class TimingMetricsAnnotationChecker implements MetricsAnnotationChecker {
     @Override
