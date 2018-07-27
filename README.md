@@ -1,6 +1,11 @@
 [![Build Status](https://travis-ci.com/stefanbirkner/jersey-micrometer.svg?branch=master)](https://travis-ci.com/stefanbirkner/jersey-micrometer)
 
 
+Jersey Micrometer Filter is published under the
+[Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0).
+It requires at least Java 8.
+
+
 ## Installation
 
 Jersey Micrometer is available from
