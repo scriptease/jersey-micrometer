@@ -9,7 +9,6 @@ import com.sun.jersey.api.model.AbstractResourceMethod;
 import com.sun.jersey.api.model.AbstractSubResourceMethod;
 import com.sun.jersey.api.model.PathValue;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 import javax.ws.rs.Path;
@@ -19,12 +18,7 @@ import static org.junit.Assert.assertEquals;
 
 public final class ResourceMeterNamerImplTest {
 
-    private ResourceMeterNamer namer;
-
-    @Before
-    public void setUp() {
-        namer = new ResourceMeterNamerImpl();
-    }
+    private final ResourceMeterNamer namer = new ResourceMeterNamerImpl();
 
     @Test
     public void testNullPathValue() {

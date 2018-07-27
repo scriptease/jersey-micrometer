@@ -43,11 +43,9 @@ import static org.junit.Assert.assertTrue;
 public class FullStackTest {
 
     private static final int PORT = 18080;
+    private final AsyncHttpClient httpClient = new AsyncHttpClient();
+    private final SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
     private Server server;
-
-    private AsyncHttpClient httpClient;
-
-    private SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
 
     @Before
     public void setUp() throws Exception {
@@ -79,8 +77,6 @@ public class FullStackTest {
                 bind(MeterRegistry.class).annotatedWith(JerseyResourceMicrometer.class).toInstance(meterRegistry);
             }
         });
-
-        httpClient = new AsyncHttpClient();
 
         server = getServer(injector.getInstance(GuiceFilter.class));
         server.start();
