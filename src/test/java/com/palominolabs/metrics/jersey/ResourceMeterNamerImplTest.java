@@ -14,16 +14,16 @@ import org.junit.Test;
 import javax.ws.rs.Path;
 import java.lang.annotation.Annotation;
 
-import static com.palominolabs.metrics.jersey.ResourceMetricNamerImpl.getPathWithoutSurroundingSlashes;
+import static com.palominolabs.metrics.jersey.ResourceMeterNamerImpl.getPathWithoutSurroundingSlashes;
 import static org.junit.Assert.assertEquals;
 
-public final class ResourceMetricNamerImplTest {
+public final class ResourceMeterNamerImplTest {
 
-    private ResourceMetricNamer namer;
+    private ResourceMeterNamer namer;
 
     @Before
     public void setUp() {
-        namer = new ResourceMetricNamerImpl();
+        namer = new ResourceMeterNamerImpl();
     }
 
     @Test
@@ -52,7 +52,7 @@ public final class ResourceMetricNamerImplTest {
         AbstractResourceMethod method =
             new AbstractResourceMethod(resource, null, Void.class, Void.class, "GET", new Annotation[]{});
 
-        assertEquals("/res GET", namer.getMetricBaseName(method));
+        assertEquals("/res GET", namer.getMeterBaseName(method));
     }
 
     @Test
@@ -62,7 +62,7 @@ public final class ResourceMetricNamerImplTest {
             new AbstractSubResourceMethod(resource, null, Void.class, Void.class, new PathValue("/meth"), "GET",
                 new Annotation[]{});
 
-        assertEquals("/res/meth GET", namer.getMetricBaseName(method));
+        assertEquals("/res/meth GET", namer.getMeterBaseName(method));
     }
 
     @Test
@@ -72,7 +72,7 @@ public final class ResourceMetricNamerImplTest {
             new AbstractSubResourceMethod(resource, null, Void.class, Void.class, new PathValue("/meth"), "GET",
                 new Annotation[]{});
 
-        assertEquals("/meth GET", namer.getMetricBaseName(method));
+        assertEquals("/meth GET", namer.getMeterBaseName(method));
     }
 
     private static void doPathValueTest(String expected, String input) {

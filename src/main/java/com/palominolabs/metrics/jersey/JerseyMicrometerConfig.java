@@ -7,7 +7,7 @@ package com.palominolabs.metrics.jersey;
 import org.skife.config.Config;
 import org.skife.config.Default;
 
-public interface JerseyMetricsConfig {
+public interface JerseyMicrometerConfig {
 
     /**
      * @return true if resource methods should have timer metrics captured by default

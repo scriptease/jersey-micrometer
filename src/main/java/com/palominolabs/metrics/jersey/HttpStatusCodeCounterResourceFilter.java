@@ -4,13 +4,13 @@
 
 package com.palominolabs.metrics.jersey;
 
-import com.codahale.metrics.Counter;
-import com.codahale.metrics.MetricRegistry;
 import com.sun.jersey.spi.container.ContainerRequest;
 import com.sun.jersey.spi.container.ContainerRequestFilter;
 import com.sun.jersey.spi.container.ContainerResponse;
 import com.sun.jersey.spi.container.ContainerResponseFilter;
 import com.sun.jersey.spi.container.ResourceFilter;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 
 import javax.annotation.concurrent.ThreadSafe;
 import java.util.concurrent.ConcurrentHashMap;
@@ -28,10 +28,10 @@ final class HttpStatusCodeCounterResourceFilter implements ResourceFilter, Conta
 
     private final String metricBaseName;
 
-    private final MetricRegistry metricsRegistry;
+    private final MeterRegistry meterRegistry;
 
-    HttpStatusCodeCounterResourceFilter(MetricRegistry metricsRegistry, String metricBaseName, Class<?> resourceClass) {
-        this.metricsRegistry = metricsRegistry;
+    HttpStatusCodeCounterResourceFilter(MeterRegistry meterRegistry, String metricBaseName, Class<?> resourceClass) {
+        this.meterRegistry = meterRegistry;
         this.metricBaseName = metricBaseName;
         this.resourceClass = resourceClass;
     }
@@ -53,19 +53,18 @@ final class HttpStatusCodeCounterResourceFilter implements ResourceFilter, Conta
 
         Counter counter = counters.get(status);
         if (counter == null) {
-            // despite the method name, this actually will return a previously created metric with the same name
-            Counter newCounter = metricsRegistry.counter(
-                MetricRegistry.name(resourceClass, metricBaseName + " " + status + " counter"));
-            Counter otherCounter = counters.putIfAbsent(status, newCounter);
-            if (otherCounter != null) {
+            Counter potentiallyNewCounter = meterRegistry.counter(
+                resourceClass.getName() + "." + metricBaseName + " " + status + " counter");
+            Counter existingCounter = counters.putIfAbsent(status, potentiallyNewCounter);
+            if (existingCounter != null) {
                 // we lost the race to set that counter, but shouldn't create a duplicate since Metrics.newCounter will do the right thing
-                counter = otherCounter;
+                counter = existingCounter;
             } else {
-                counter = newCounter;
+                counter = potentiallyNewCounter;
             }
         }
 
-        counter.inc();
+        counter.increment();
 
         return response;
     }

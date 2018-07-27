@@ -4,7 +4,6 @@
 
 package com.palominolabs.metrics.jersey;
 
-import com.codahale.metrics.MetricRegistry;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.sun.jersey.api.model.AbstractMethod;
@@ -12,6 +11,7 @@ import com.sun.jersey.api.model.AbstractResourceMethod;
 import com.sun.jersey.api.model.AbstractSubResourceLocator;
 import com.sun.jersey.spi.container.ResourceFilter;
 import com.sun.jersey.spi.container.ResourceFilterFactory;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,17 +24,17 @@ public final class HttpStatusCodeCounterResourceFilterFactory implements Resourc
 
     private static final Logger logger = LoggerFactory.getLogger(HttpStatusCodeCounterResourceFilterFactory.class);
 
-    private final JerseyMetricsConfig jerseyMetricsConfig;
+    private final JerseyMicrometerConfig jerseyMicrometerConfig;
 
-    private final ResourceMetricNamer namer;
-    private final MetricRegistry metricsRegistry;
+    private final ResourceMeterNamer namer;
+    private final MeterRegistry meterRegistry;
 
     @Inject
-    HttpStatusCodeCounterResourceFilterFactory(JerseyMetricsConfig jerseyMetricsConfig, ResourceMetricNamer namer,
-        @JerseyResourceMetrics MetricRegistry metricsRegistry) {
-        this.jerseyMetricsConfig = jerseyMetricsConfig;
+    HttpStatusCodeCounterResourceFilterFactory(JerseyMicrometerConfig jerseyMicrometerConfig, ResourceMeterNamer namer,
+        @JerseyResourceMicrometer MeterRegistry meterRegistry) {
+        this.jerseyMicrometerConfig = jerseyMicrometerConfig;
         this.namer = namer;
-        this.metricsRegistry = metricsRegistry;
+        this.meterRegistry = meterRegistry;
     }
 
     @Override
@@ -51,15 +51,15 @@ public final class HttpStatusCodeCounterResourceFilterFactory implements Resourc
                 .getState((AbstractResourceMethod) am, new StatusCodeMetricsAnnotationChecker());
 
             if (state == EnabledState.OFF ||
-                (state == EnabledState.UNSPECIFIED && !jerseyMetricsConfig.isStatusCodeCounterEnabledByDefault())) {
+                (state == EnabledState.UNSPECIFIED && !jerseyMicrometerConfig.isStatusCodeCounterEnabledByDefault())) {
                 return null;
             }
 
-            String metricBaseName = namer.getMetricBaseName((AbstractResourceMethod) am);
+            String metricBaseName = namer.getMeterBaseName((AbstractResourceMethod) am);
             Class<?> resourceClass = am.getResource().getResourceClass();
 
             return singletonList(
-                    new HttpStatusCodeCounterResourceFilter(metricsRegistry, metricBaseName, resourceClass));
+                    new HttpStatusCodeCounterResourceFilter(meterRegistry, metricBaseName, resourceClass));
         } else {
             logger.warn("Got an unexpected instance of " + am.getClass().getName() + ": " + am);
             return null;

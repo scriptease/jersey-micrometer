@@ -57,9 +57,9 @@
             <version>1.18.1</version>
         </dependency>
         <dependency>
-            <groupId>io.dropwizard.metrics</groupId>
-            <artifactId>metrics-core</artifactId>
-            <version>3.1.0</version>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-core</artifactId>
+            <version>[1.0.0,)</version>
         </dependency>
         <dependency>
             <groupId>com.google.inject.extensions</groupId>
@@ -75,12 +75,6 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>1.7.7</version>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>jul-to-slf4j</artifactId>
-            <version>[1.7.7]</version>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>junit</groupId>

@@ -1,9 +1,5 @@
 package com.palominolabs.metrics.jersey;
 
-import com.codahale.metrics.ConsoleReporter;
-import com.codahale.metrics.Counter;
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.Timer;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -15,6 +11,11 @@ import com.palominolabs.jersey.dispatchwrapper.ResourceMethodWrappedDispatchModu
 import com.sun.jersey.api.core.ResourceConfig;
 import com.sun.jersey.guice.JerseyServletModule;
 import com.sun.jersey.guice.spi.container.servlet.GuiceContainer;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -22,7 +23,6 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
@@ -39,9 +39,10 @@ import javax.ws.rs.Path;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
-import java.util.logging.LogManager;
 
-import static java.util.Collections.singleton;
+import static java.util.Arrays.asList;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.stream.Collectors.toSet;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -52,18 +53,10 @@ public class FullStackTest {
 
     private AsyncHttpClient httpClient;
 
-    private ConsoleReporter consoleReporter;
-
-    private MetricRegistry metricRegistry;
+    private SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
 
     @Before
     public void setUp() throws Exception {
-        LogManager.getLogManager().reset();
-        SLF4JBridgeHandler.install();
-
-        final MetricRegistry registry = new MetricRegistry();
-        metricRegistry = registry;
-
         final Map<String, String> initParams = new HashMap<>();
         initParams.put(ResourceConfig.PROPERTY_RESOURCE_FILTER_FACTORIES,
             HttpStatusCodeCounterResourceFilterFactory.class.getCanonicalName());
@@ -88,8 +81,8 @@ public class FullStackTest {
                 bind(EnabledOnClassDisabledOnMethod.class);
 
                 install(new ConfigModuleBuilder().build());
-                install(new ResourceMethodMetricsModule());
-                bind(MetricRegistry.class).annotatedWith(JerseyResourceMetrics.class).toInstance(registry);
+                install(new ResourceMethodMicrometerModule());
+                bind(MeterRegistry.class).annotatedWith(JerseyResourceMicrometer.class).toInstance(meterRegistry);
             }
         });
 
@@ -97,15 +90,10 @@ public class FullStackTest {
 
         server = getServer(injector.getInstance(GuiceFilter.class));
         server.start();
-
-        consoleReporter = ConsoleReporter.forRegistry(registry).build();
     }
 
     @After
     public void tearDown() throws Exception {
-        consoleReporter.report();
-
-        consoleReporter.stop();
         server.stop();
     }
 
@@ -124,30 +112,30 @@ public class FullStackTest {
             httpClient.prepareGet("http://localhost:" + PORT + "/enabledOnClassDisabledOnMethod").execute().get()
                 .getStatusCode());
 
-        SortedMap<String, Timer> timers = metricRegistry.getTimers();
+        Set<String> meterNames = meterRegistry.getMeters()
+            .stream()
+            .map(Meter::getId)
+            .map(Meter.Id::getName)
+            .collect(toSet());
 
-        // check names
-        Set<String> timerNames = singleton(
-
-            "com.palominolabs.metrics.jersey.FullStackTest$EnabledOnClass./enabledOnClass GET timer");
-
-        assertEquals(timerNames, timers.keySet());
-
-        SortedMap<String, Counter> counters = metricRegistry.getCounters();
-
-        Set<String> counterNames = singleton(
-            "com.palominolabs.metrics.jersey.FullStackTest$EnabledOnClass./enabledOnClass GET 200 counter");
-
-        assertEquals(counterNames, counters.keySet());
+        assertEquals(
+            new HashSet<>(asList(
+                "com.palominolabs.metrics.jersey.FullStackTest$EnabledOnClass./enabledOnClass GET timer",
+                "com.palominolabs.metrics.jersey.FullStackTest$EnabledOnClass./enabledOnClass GET 200 counter"
+            )),
+            meterNames
+        );
 
         // check values
 
-        Timer timer = timers.get(timerNames.iterator().next());
-        assertEquals(1, timer.getCount());
-        assertTrue(timer.getMeanRate() > 0D);
+        Timer timer = meterRegistry.timer(
+            "com.palominolabs.metrics.jersey.FullStackTest$EnabledOnClass./enabledOnClass GET timer");
+        assertEquals(1, timer.count());
+        assertTrue(timer.mean(MILLISECONDS) > 0D);
 
-        Counter counter = counters.get(counterNames.iterator().next());
-        assertEquals(1, counter.getCount());
+        Counter counter = meterRegistry.counter(
+            "com.palominolabs.metrics.jersey.FullStackTest$EnabledOnClass./enabledOnClass GET 200 counter");
+        assertEquals(1d, counter.count(), 0.1d);
     }
 
     private Server getServer(GuiceFilter filter) {

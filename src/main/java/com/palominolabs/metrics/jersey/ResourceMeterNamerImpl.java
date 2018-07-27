@@ -11,10 +11,10 @@ import com.sun.jersey.api.model.PathValue;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-final class ResourceMetricNamerImpl implements ResourceMetricNamer {
+final class ResourceMeterNamerImpl implements ResourceMeterNamer {
     @Nonnull
     @Override
-    public String getMetricBaseName(AbstractResourceMethod am) {
+    public String getMeterBaseName(AbstractResourceMethod am) {
 
         String metricId = getPathWithoutSurroundingSlashes(am.getResource().getPath());
 
