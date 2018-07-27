@@ -1,8 +1,6 @@
 package com.github.stefanbirkner.micrometer.jersey;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import com.google.inject.servlet.GuiceFilter;
 import com.google.inject.servlet.ServletModule;
 import com.ning.http.client.AsyncHttpClient;
@@ -18,12 +16,9 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 import javax.servlet.DispatcherType;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -31,7 +26,9 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 
+import static com.google.inject.Guice.createInjector;
 import static java.util.Collections.singleton;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.stream.Collectors.toSet;
@@ -41,14 +38,78 @@ import static org.junit.Assert.assertTrue;
 public class FullStackTest {
 
     private static final int PORT = 18080;
-    private final AsyncHttpClient httpClient = new AsyncHttpClient();
     private final SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
-    private Server server;
 
-    @Before
-    public void setUp(
+    @Test
+    public void request_is_measured_when_enabled_on_class(
     ) throws Exception {
-        Injector injector = Guice.createInjector(new AbstractModule() {
+        Server server = startServer(EnabledOnClass.class);
+        try {
+            sendGetRequest("http://localhost:" + PORT + "/enabledOnClass");
+
+            Set<String> meterNames = meterRegistry.getMeters()
+                .stream()
+                .map(Meter::getId)
+                .map(Meter.Id::getName)
+                .collect(toSet());
+
+            assertEquals(
+                singleton(
+                    "com.github.stefanbirkner.micrometer.jersey.FullStackTest$EnabledOnClass./enabledOnClass"
+                ),
+                meterNames
+            );
+
+            Timer timer = meterRegistry.timer(
+                "com.github.stefanbirkner.micrometer.jersey.FullStackTest$EnabledOnClass./enabledOnClass",
+                "method", "GET",
+                "status", "200");
+            assertEquals(1, timer.count());
+            assertTrue(timer.totalTime(MILLISECONDS) > 0D);
+        } finally {
+            server.stop();
+        }
+    }
+
+    @Test
+    public void request_is_not_measured_when_disabled_on_class(
+    ) throws Exception {
+        Server server = startServer(DisabledOnClass.class);
+        try {
+            sendGetRequest("http://localhost:" + PORT + "/disabledOnClass");
+
+            assertNothingMeasured();
+        } finally {
+            server.stop();
+        }
+    }
+
+    @Test
+    public void request_is_not_measured_when_enabled_on_class_but_disabled_on_method(
+    ) throws Exception {
+        Server server = startServer(EnabledOnClassDisabledOnMethod.class);
+        try {
+            sendGetRequest("http://localhost:" + PORT + "/enabledOnClassDisabledOnMethod");
+
+            assertNothingMeasured();
+        } finally {
+            server.stop();
+        }
+    }
+
+    private Server startServer(
+        Class<?> resource
+    ) throws Exception {
+        AbstractModule module = createModule(resource);
+        GuiceFilter guiceFilter = createInjector(module)
+            .getInstance(GuiceFilter.class);
+        Server server = createServer(guiceFilter);
+        server.start();
+        return server;
+    }
+
+    private AbstractModule createModule(Class<?> resource) {
+        return new AbstractModule() {
             @Override
             protected void configure() {
                 binder().requireExplicitBindings();
@@ -62,64 +123,16 @@ public class FullStackTest {
                 install(new JerseyServletModule());
                 bind(GuiceFilter.class);
                 bind(GuiceContainer.class);
-                bind(EnabledOnClass.class);
-                bind(DisabledOnClass.class);
-                bind(EnabledOnClassDisabledOnMethod.class);
+                bind(resource);
 
                 install(new ConfigModuleBuilder().build());
                 install(new ResourceMethodMicrometerModule());
                 bind(MeterRegistry.class).annotatedWith(JerseyResourceMicrometer.class).toInstance(meterRegistry);
             }
-        });
-
-        server = getServer(injector.getInstance(GuiceFilter.class));
-        server.start();
+        };
     }
 
-    @After
-    public void tearDown(
-    ) throws Exception {
-        server.stop();
-    }
-
-    @Test
-    public void testFullStack(
-    ) throws Exception {
-        assertEquals(200,
-            httpClient.prepareGet("http://localhost:" + PORT + "/enabledOnClass").execute().get().getStatusCode());
-
-        // these other two resource classes should not have metrics
-        assertEquals(200,
-            httpClient.prepareGet("http://localhost:" + PORT + "/disabledOnClass").execute().get().getStatusCode());
-
-        assertEquals(200,
-            httpClient.prepareGet("http://localhost:" + PORT + "/enabledOnClassDisabledOnMethod").execute().get()
-                .getStatusCode());
-
-        Set<String> meterNames = meterRegistry.getMeters()
-            .stream()
-            .map(Meter::getId)
-            .map(Meter.Id::getName)
-            .collect(toSet());
-
-        assertEquals(
-            singleton(
-                "com.github.stefanbirkner.micrometer.jersey.FullStackTest$EnabledOnClass./enabledOnClass"
-            ),
-            meterNames
-        );
-
-        // check values
-
-        Timer timer = meterRegistry.timer(
-            "com.github.stefanbirkner.micrometer.jersey.FullStackTest$EnabledOnClass./enabledOnClass",
-            "method", "GET",
-            "status", "200");
-        assertEquals(1, timer.count());
-        assertTrue(timer.mean(MILLISECONDS) > 0D);
-    }
-
-    private Server getServer(
+    private Server createServer(
         GuiceFilter filter
     ) {
         Server server = new Server(PORT);
@@ -127,8 +140,7 @@ public class FullStackTest {
 
         servletHandler.addServlet(new ServletHolder(new HttpServlet() {
             @Override
-            protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException,
-                IOException {
+            protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
                 resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
                 resp.setContentType("text/plain");
                 resp.setContentType("UTF-8");
@@ -144,11 +156,28 @@ public class FullStackTest {
         return server;
     }
 
+    private void sendGetRequest(
+        String url
+    ) throws IOException, ExecutionException, InterruptedException {
+        new AsyncHttpClient()
+            .prepareGet(url)
+            .execute()
+            .get();
+    }
+
+    private void assertNothingMeasured() {
+        assertEquals(
+            0,
+            meterRegistry.getMeters().size()
+        );
+    }
+
     @Path("enabledOnClass")
     @ResourceMetrics
     public static class EnabledOnClass {
         @GET
-        public String get() {
+        public String get() throws Exception {
+            Thread.sleep(10);
             return "ok";
         }
     }
