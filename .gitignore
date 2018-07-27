@@ -1,11 +1,2 @@
 .flattened-pom.xml
-*.iml
-*.ipr
-*.iws
-*.swp
-./out
-.DS_Store
-.directory
-.idea
 target
-out
