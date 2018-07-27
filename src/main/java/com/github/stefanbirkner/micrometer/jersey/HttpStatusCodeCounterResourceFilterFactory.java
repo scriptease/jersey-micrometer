@@ -30,16 +30,20 @@ public final class HttpStatusCodeCounterResourceFilterFactory implements Resourc
     private final MeterRegistry meterRegistry;
 
     @Inject
-    HttpStatusCodeCounterResourceFilterFactory(JerseyMicrometerConfig jerseyMicrometerConfig, ResourceMeterNamer namer,
-        @JerseyResourceMicrometer MeterRegistry meterRegistry) {
+    HttpStatusCodeCounterResourceFilterFactory(
+        JerseyMicrometerConfig jerseyMicrometerConfig,
+        ResourceMeterNamer namer,
+        @JerseyResourceMicrometer MeterRegistry meterRegistry
+    ) {
         this.jerseyMicrometerConfig = jerseyMicrometerConfig;
         this.namer = namer;
         this.meterRegistry = meterRegistry;
     }
 
     @Override
-    public List<ResourceFilter> create(AbstractMethod am) {
-
+    public List<ResourceFilter> create(
+        AbstractMethod am
+    ) {
         // documented to only be AbstractSubResourceLocator, AbstractResourceMethod, or AbstractSubResourceMethod
         if (am instanceof AbstractSubResourceLocator) {
             // not actually invoked per request, nothing to do

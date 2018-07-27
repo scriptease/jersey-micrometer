@@ -46,13 +46,19 @@ public class MetricAnnotationFeatureResolverTest {
         doMethodStateTest(EnabledState.OFF, FooResourceDisabled.class, new Annotation[]{});
     }
 
-    private static AbstractResourceMethod getAbstractMethod(Class<?> resourceClass, Annotation[] methodAnnotations) {
+    private static AbstractResourceMethod getAbstractMethod(
+        Class<?> resourceClass,
+        Annotation[] methodAnnotations
+    ) {
         return new AbstractResourceMethod(new AbstractResource(resourceClass), null, Void.class, Void.class, "GET",
             methodAnnotations);
     }
 
-    private static void doMethodStateTest(EnabledState expected, Class<?> resourceClass,
-        Annotation[] methodAnnotations) {
+    private static void doMethodStateTest(
+        EnabledState expected,
+        Class<?> resourceClass,
+        Annotation[] methodAnnotations
+    ) {
         assertEquals(expected,
             MetricAnnotationFeatureResolver
                 .getState(getAbstractMethod(resourceClass, methodAnnotations), new TimingMetricsAnnotationChecker()));
@@ -78,7 +84,9 @@ public class MetricAnnotationFeatureResolverTest {
 
         private final boolean timing;
 
-        private ResourceMetricsImpl(boolean timing) {
+        private ResourceMetricsImpl(
+            boolean timing
+        ) {
             this.timing = timing;
         }
 

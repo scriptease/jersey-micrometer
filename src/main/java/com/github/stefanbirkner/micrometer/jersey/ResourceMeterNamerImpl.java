@@ -14,7 +14,9 @@ import javax.annotation.Nullable;
 final class ResourceMeterNamerImpl implements ResourceMeterNamer {
     @Nonnull
     @Override
-    public String getMeterBaseName(AbstractResourceMethod am) {
+    public String getMeterBaseName(
+        AbstractResourceMethod am
+    ) {
 
         String metricId = getPathWithoutSurroundingSlashes(am.getResource().getPath());
 
@@ -43,7 +45,9 @@ final class ResourceMeterNamerImpl implements ResourceMeterNamer {
     }
 
     @Nonnull
-    static String getPathWithoutSurroundingSlashes(@Nullable PathValue pathValue) {
+    static String getPathWithoutSurroundingSlashes(
+        @Nullable PathValue pathValue
+    ) {
         if (pathValue == null) {
             return "";
         }

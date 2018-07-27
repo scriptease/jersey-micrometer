@@ -48,7 +48,8 @@ public class FullStackTest {
     private Server server;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp(
+    ) throws Exception {
         final Map<String, String> initParams = new HashMap<>();
         initParams.put(ResourceConfig.PROPERTY_RESOURCE_FILTER_FACTORIES,
             HttpStatusCodeCounterResourceFilterFactory.class.getCanonicalName());
@@ -83,12 +84,14 @@ public class FullStackTest {
     }
 
     @After
-    public void tearDown() throws Exception {
+    public void tearDown(
+    ) throws Exception {
         server.stop();
     }
 
     @Test
-    public void testFullStack() throws Exception {
+    public void testFullStack(
+    ) throws Exception {
         assertEquals(200,
             httpClient.prepareGet("http://localhost:" + PORT + "/enabledOnClass").execute().get().getStatusCode());
 
@@ -126,7 +129,9 @@ public class FullStackTest {
         assertEquals(1d, counter.count(), 0.1d);
     }
 
-    private Server getServer(GuiceFilter filter) {
+    private Server getServer(
+        GuiceFilter filter
+    ) {
         Server server = new Server(PORT);
         ServletContextHandler servletHandler = new ServletContextHandler();
 

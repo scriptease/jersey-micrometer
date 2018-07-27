@@ -24,15 +24,20 @@ final class MicrometerWrapperFactory
     private final MeterRegistry meterRegistry;
 
     @Inject
-    MicrometerWrapperFactory(JerseyMicrometerConfig jerseyMicrometerConfig, ResourceMeterNamer namer,
-                             @JerseyResourceMicrometer MeterRegistry meterRegistry) {
+    MicrometerWrapperFactory(
+        JerseyMicrometerConfig jerseyMicrometerConfig,
+        ResourceMeterNamer namer,
+        @JerseyResourceMicrometer MeterRegistry meterRegistry
+    ) {
         this.jerseyMicrometerConfig = jerseyMicrometerConfig;
         this.namer = namer;
         this.meterRegistry = meterRegistry;
     }
 
     @Override
-    public ResourceMethodDispatchWrapper createDispatchWrapper(AbstractResourceMethod am) {
+    public ResourceMethodDispatchWrapper createDispatchWrapper(
+        AbstractResourceMethod am
+    ) {
         EnabledState state = MetricAnnotationFeatureResolver.getState(am, new TimingMetricsAnnotationChecker());
 
         if (state == EnabledState.OFF ||

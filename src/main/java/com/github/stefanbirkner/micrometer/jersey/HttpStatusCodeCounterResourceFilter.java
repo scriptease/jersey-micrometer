@@ -30,7 +30,11 @@ final class HttpStatusCodeCounterResourceFilter implements ResourceFilter, Conta
 
     private final MeterRegistry meterRegistry;
 
-    HttpStatusCodeCounterResourceFilter(MeterRegistry meterRegistry, String metricBaseName, Class<?> resourceClass) {
+    HttpStatusCodeCounterResourceFilter(
+        MeterRegistry meterRegistry,
+        String metricBaseName,
+        Class<?> resourceClass
+    ) {
         this.meterRegistry = meterRegistry;
         this.metricBaseName = metricBaseName;
         this.resourceClass = resourceClass;
@@ -48,7 +52,10 @@ final class HttpStatusCodeCounterResourceFilter implements ResourceFilter, Conta
     }
 
     @Override
-    public ContainerResponse filter(ContainerRequest request, ContainerResponse response) {
+    public ContainerResponse filter(
+        ContainerRequest request,
+        ContainerResponse response
+    ) {
         Integer status = response.getStatus();
 
         Counter counter = counters.get(status);

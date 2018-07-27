@@ -69,7 +69,10 @@ public final class ResourceMeterNamerImplTest {
         assertEquals("/meth GET", namer.getMeterBaseName(method));
     }
 
-    private static void doPathValueTest(String expected, String input) {
+    private static void doPathValueTest(
+        String expected,
+        String input
+    ) {
         Assert.assertEquals(expected, ResourceMeterNamerImpl.getPathWithoutSurroundingSlashes(new PathValue(input)));
     }
 

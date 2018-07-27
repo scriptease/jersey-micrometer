@@ -15,5 +15,7 @@ public interface ResourceMeterNamer {
      * @return a string name used as the prefix for all metrics about that resource method
      */
     @Nonnull
-    String getMeterBaseName(AbstractResourceMethod am);
+    String getMeterBaseName(
+        AbstractResourceMethod am
+    );
 }
