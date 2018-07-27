@@ -14,7 +14,9 @@ import io.micrometer.core.instrument.Timer;
 /**
  * Factory for dispatch wrappers that wrap request invocation to get timing info.
  */
-final class MicrometerWrapperFactory implements ResourceMethodDispatchWrapperFactory {
+final class MicrometerWrapperFactory
+    implements ResourceMethodDispatchWrapperFactory
+{
 
     private final JerseyMicrometerConfig jerseyMicrometerConfig;
 
