@@ -4,103 +4,417 @@ import com.google.inject.AbstractModule;
 import com.google.inject.servlet.GuiceFilter;
 import com.google.inject.servlet.ServletModule;
 import com.ning.http.client.AsyncHttpClient;
+import com.palominolabs.config.ConfigModule;
 import com.palominolabs.config.ConfigModuleBuilder;
 import com.palominolabs.jersey.dispatchwrapper.ResourceMethodWrappedDispatchModule;
 import com.sun.jersey.guice.JerseyServletModule;
 import com.sun.jersey.guice.spi.container.servlet.GuiceContainer;
-import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.search.RequiredSearch;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.apache.commons.configuration.MapConfiguration;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.junit.Test;
+import org.junit.experimental.runners.Enclosed;
+import org.junit.runner.RunWith;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 import static com.google.inject.Guice.createInjector;
-import static java.util.Collections.singleton;
+import static java.util.Collections.singletonMap;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.stream.Collectors.toSet;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+@RunWith(Enclosed.class)
 public class FullStackTest {
 
     private static final int PORT = 18080;
-    private final SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
 
-    @Test
-    public void request_is_measured_when_enabled_on_class(
-    ) throws Exception {
-        Server server = startServer(EnabledOnClass.class);
-        try {
-            sendGetRequest("http://localhost:" + PORT + "/enabledOnClass");
+    public static class about_measurement {
+        private final SimpleMeterRegistry registry = new SimpleMeterRegistry();
 
-            Set<String> meterNames = meterRegistry.getMeters()
-                .stream()
-                .map(Meter::getId)
-                .map(Meter.Id::getName)
-                .collect(toSet());
+        @Test
+        public void measurement_name_contains_class_and_path(
+        ) throws Exception {
+            Server server = startServer();
+            try {
+                sendGetRequest();
 
-            assertEquals(
-                singleton(
-                    "com.github.stefanbirkner.micrometer.jersey.FullStackTest$EnabledOnClass./enabledOnClass"
-                ),
-                meterNames
+                assertEquals(
+                    "com.github.stefanbirkner.micrometer.jersey.NoAnnotationOnClass./no-class-annotation/no-method-annotation",
+                    getTimer().getId().getName()
+                );
+            } finally {
+                server.stop();
+            }
+        }
+
+        @Test
+        public void measurement_count_is_equal_to_number_of_requests(
+        ) throws Exception {
+            Server server = startServer();
+            try {
+                sendGetRequest();
+                sendGetRequest();
+
+                assertEquals(
+                    2,
+                    getTimer().count()
+                );
+            } finally {
+                server.stop();
+            }
+        }
+
+        @Test
+        public void measurement_time_is_greater_than_zero(
+        ) throws Exception {
+            Server server = startServer();
+            try {
+                sendGetRequest();
+
+                assertTrue(
+                    getTimer().totalTime(MILLISECONDS) > 0d
+                );
+            } finally {
+                server.stop();
+            }
+        }
+
+        @Test
+        public void measurement_is_tagged_with_HTTP_method(
+        ) throws Exception {
+            Server server = startServer();
+            try {
+                sendGetRequest();
+
+                assertMeasurementPresentWithTag("method", "GET");
+            } finally {
+                server.stop();
+            }
+        }
+
+        @Test
+        public void measurement_is_tagged_with_status(
+        ) throws Exception {
+            Server server = startServer();
+            try {
+                sendGetRequest();
+
+                assertMeasurementPresentWithTag("status", "200");
+            } finally {
+                server.stop();
+            }
+        }
+
+        private Server startServer(
+        ) throws Exception {
+            return FullStackTest.startServer(
+                registry
             );
+        }
 
-            Timer timer = meterRegistry.timer(
-                "com.github.stefanbirkner.micrometer.jersey.FullStackTest$EnabledOnClass./enabledOnClass",
-                "method", "GET",
-                "status", "200");
-            assertEquals(1, timer.count());
-            assertTrue(timer.totalTime(MILLISECONDS) > 0D);
-        } finally {
-            server.stop();
+
+        private void sendGetRequest(
+        ) throws IOException, ExecutionException, InterruptedException {
+            FullStackTest.sendGetRequest(
+                "/no-class-annotation/no-method-annotation"
+            );
+        }
+
+        private Timer getTimer() {
+            return (Timer) registry.getMeters().get(0);
+        }
+
+        private void assertMeasurementPresentWithTag(String key, String value) {
+            RequiredSearch.in(registry)
+                .tag(key, value)
+                .meter(); //throws an exception if no matching meter is present
         }
     }
 
-    @Test
-    public void request_is_not_measured_when_disabled_on_class(
-    ) throws Exception {
-        Server server = startServer(DisabledOnClass.class);
-        try {
-            sendGetRequest("http://localhost:" + PORT + "/disabledOnClass");
+    public static class measurement_enabled_by_default {
+        private final SimpleMeterRegistry registry = new SimpleMeterRegistry();
 
-            assertNothingMeasured();
-        } finally {
-            server.stop();
+        @Test
+        public void request_is_measured_when_no_annotation_is_present(
+        ) throws Exception {
+            Server server = startServer();
+            try {
+                sendGetRequest("/no-class-annotation/no-method-annotation");
+
+                assertSingleMeasurement(registry);
+            } finally {
+                server.stop();
+            }
+        }
+
+        @Test
+        public void request_is_measured_when_enabled_on_class(
+        ) throws Exception {
+            Server server = startServer();
+            try {
+                sendGetRequest("/enabled-on-class/no-method-annotation");
+
+                assertSingleMeasurement(registry);
+            } finally {
+                server.stop();
+            }
+        }
+
+        @Test
+        public void request_is_not_measured_when_disabled_on_class(
+        ) throws Exception {
+            Server server = startServer();
+            try {
+                sendGetRequest("/disabled-on-class/no-method-annotation");
+
+                assertNoMeasurement(registry);
+            } finally {
+                server.stop();
+            }
+        }
+
+        @Test
+        public void request_is_measured_when_enabled_on_method(
+        ) throws Exception {
+            Server server = startServer();
+            try {
+                sendGetRequest("/no-class-annotation/enabled-on-method");
+
+                assertSingleMeasurement(registry);
+            } finally {
+                server.stop();
+            }
+        }
+
+        @Test
+        public void request_is_not_measured_when_disabled_on_method(
+        ) throws Exception {
+            Server server = startServer();
+            try {
+                sendGetRequest("/no-class-annotation/disabled-on-method");
+
+                assertNoMeasurement(registry);
+            } finally {
+                server.stop();
+            }
+        }
+
+        @Test
+        public void request_is_measured_when_enabled_on_class_and_method(
+        ) throws Exception {
+            Server server = startServer();
+            try {
+                sendGetRequest("/enabled-on-class/enabled-on-method");
+
+                assertSingleMeasurement(registry);
+            } finally {
+                server.stop();
+            }
+        }
+
+        @Test
+        public void request_is_not_measured_when_enabled_on_class_but_disabled_on_method(
+        ) throws Exception {
+            Server server = startServer();
+            try {
+                sendGetRequest("/enabled-on-class/disabled-on-method");
+
+                assertNoMeasurement(registry);
+            } finally {
+                server.stop();
+            }
+        }
+
+        @Test
+        public void request_is_measured_when_disabled_on_class_but_enabled_on_method(
+        ) throws Exception {
+            Server server = startServer();
+            try {
+                sendGetRequest("/disabled-on-class/enabled-on-method");
+
+                assertSingleMeasurement(registry);
+            } finally {
+                server.stop();
+            }
+        }
+
+        @Test
+        public void request_is_not_measured_when_disabled_on_class_and_method(
+        ) throws Exception {
+            Server server = startServer();
+            try {
+                sendGetRequest("/disabled-on-class/disabled-on-method");
+
+                assertNoMeasurement(registry);
+            } finally {
+                server.stop();
+            }
+        }
+
+        private Server startServer(
+        ) throws Exception {
+            return FullStackTest.startServer(registry);
         }
     }
 
-    @Test
-    public void request_is_not_measured_when_enabled_on_class_but_disabled_on_method(
-    ) throws Exception {
-        Server server = startServer(EnabledOnClassDisabledOnMethod.class);
-        try {
-            sendGetRequest("http://localhost:" + PORT + "/enabledOnClassDisabledOnMethod");
+    public static class measurement_disabled_by_default {
+        private final SimpleMeterRegistry registry = new SimpleMeterRegistry();
 
-            assertNothingMeasured();
-        } finally {
-            server.stop();
+        @Test
+        public void request_is_not_measured_when_no_annotation_is_present(
+        ) throws Exception {
+            Server server = startServer();
+            try {
+                sendGetRequest("/no-class-annotation/no-method-annotation");
+
+                assertNoMeasurement(registry);
+            } finally {
+                server.stop();
+            }
+        }
+
+        @Test
+        public void request_is_measured_when_enabled_on_class(
+        ) throws Exception {
+            Server server = startServer();
+            try {
+                sendGetRequest("/enabled-on-class/no-method-annotation");
+
+                assertSingleMeasurement(registry);
+            } finally {
+                server.stop();
+            }
+        }
+
+        @Test
+        public void request_is_not_measured_when_disabled_on_class(
+        ) throws Exception {
+            Server server = startServer();
+            try {
+                sendGetRequest("/disabled-on-class/no-method-annotation");
+
+                assertNoMeasurement(registry);
+            } finally {
+                server.stop();
+            }
+        }
+
+        @Test
+        public void request_is_measured_when_enabled_on_method(
+        ) throws Exception {
+            Server server = startServer();
+            try {
+                sendGetRequest("/no-class-annotation/enabled-on-method");
+
+                assertSingleMeasurement(registry);
+            } finally {
+                server.stop();
+            }
+        }
+
+        @Test
+        public void request_is_not_measured_when_disabled_on_method(
+        ) throws Exception {
+            Server server = startServer();
+            try {
+                sendGetRequest("/no-class-annotation/disabled-on-method");
+
+                assertNoMeasurement(registry);
+            } finally {
+                server.stop();
+            }
+        }
+
+        @Test
+        public void request_is_measured_when_enabled_on_class_and_method(
+        ) throws Exception {
+            Server server = startServer();
+            try {
+                sendGetRequest("/enabled-on-class/enabled-on-method");
+
+                assertSingleMeasurement(registry);
+            } finally {
+                server.stop();
+            }
+        }
+
+        @Test
+        public void request_is_not_measured_when_enabled_on_class_but_disabled_on_method(
+        ) throws Exception {
+            Server server = startServer();
+            try {
+                sendGetRequest("/enabled-on-class/disabled-on-method");
+
+                assertNoMeasurement(registry);
+            } finally {
+                server.stop();
+            }
+        }
+
+        @Test
+        public void request_is_measured_when_disabled_on_class_but_enabled_on_method(
+        ) throws Exception {
+            Server server = startServer();
+            try {
+                sendGetRequest("/disabled-on-class/enabled-on-method");
+
+                assertSingleMeasurement(registry);
+            } finally {
+                server.stop();
+            }
+        }
+
+        @Test
+        public void request_is_not_measured_when_disabled_on_class_and_method(
+        ) throws Exception {
+            Server server = startServer();
+            try {
+                sendGetRequest("/disabled-on-class/disabled-on-method");
+
+                assertNoMeasurement(registry);
+            } finally {
+                server.stop();
+            }
+        }
+
+        private Server startServer(
+        ) throws Exception {
+            Map<String, Object> config = singletonMap(
+                "com.github.stefanbirkner.micrometer.jersey.resourceMethod.enabledByDefault",
+                "false"
+            );
+            ConfigModule configModule = new ConfigModuleBuilder()
+                .addConfiguration(new MapConfiguration(config))
+                .build();
+
+            AbstractModule module = createModule(configModule, registry);
+            return startServerWithModule(module);
         }
     }
 
-    private Server startServer(
-        Class<?> resource
+    private static Server startServer(
+        MeterRegistry registry
     ) throws Exception {
-        AbstractModule module = createModule(resource);
+        AbstractModule module = createModule(registry);
+        return startServerWithModule(module);
+    }
+
+    private static Server startServerWithModule(
+        AbstractModule module
+    ) throws Exception {
         GuiceFilter guiceFilter = createInjector(module)
             .getInstance(GuiceFilter.class);
         Server server = createServer(guiceFilter);
@@ -108,7 +422,19 @@ public class FullStackTest {
         return server;
     }
 
-    private AbstractModule createModule(Class<?> resource) {
+    private static AbstractModule createModule(
+        MeterRegistry registry
+    ) {
+        return createModule(
+            new ConfigModuleBuilder().build(),
+            registry
+        );
+    }
+
+    private static AbstractModule createModule(
+        ConfigModule configModule,
+        MeterRegistry registry
+    ) {
         return new AbstractModule() {
             @Override
             protected void configure() {
@@ -123,16 +449,20 @@ public class FullStackTest {
                 install(new JerseyServletModule());
                 bind(GuiceFilter.class);
                 bind(GuiceContainer.class);
-                bind(resource);
+                bind(DisabledOnClass.class);
+                bind(EnabledOnClass.class);
+                bind(NoAnnotationOnClass.class);
 
-                install(new ConfigModuleBuilder().build());
+                install(configModule);
                 install(new ResourceMethodMicrometerModule());
-                bind(MeterRegistry.class).annotatedWith(JerseyResourceMicrometer.class).toInstance(meterRegistry);
+                bind(MeterRegistry.class)
+                    .annotatedWith(JerseyResourceMicrometer.class)
+                    .toInstance(registry);
             }
         };
     }
 
-    private Server createServer(
+    private static Server createServer(
         GuiceFilter filter
     ) {
         Server server = new Server(PORT);
@@ -156,48 +486,30 @@ public class FullStackTest {
         return server;
     }
 
-    private void sendGetRequest(
-        String url
+    private static void sendGetRequest(
+        String path
     ) throws IOException, ExecutionException, InterruptedException {
         new AsyncHttpClient()
-            .prepareGet(url)
+            .prepareGet("http://localhost:" + PORT + path)
             .execute()
             .get();
     }
 
-    private void assertNothingMeasured() {
+    private static void assertNoMeasurement(
+        MeterRegistry registry
+    ) {
         assertEquals(
             0,
-            meterRegistry.getMeters().size()
+            registry.getMeters().size()
         );
     }
 
-    @Path("enabledOnClass")
-    @ResourceMetrics
-    public static class EnabledOnClass {
-        @GET
-        public String get() throws Exception {
-            Thread.sleep(10);
-            return "ok";
-        }
-    }
-
-    @Path("disabledOnClass")
-    @ResourceMetrics(enabled = false)
-    public static class DisabledOnClass {
-        @GET
-        public String get() {
-            return "ok";
-        }
-    }
-
-    @Path("enabledOnClassDisabledOnMethod")
-    @ResourceMetrics
-    public static class EnabledOnClassDisabledOnMethod {
-        @GET
-        @ResourceMetrics(enabled = false)
-        public String get() {
-            return "ok";
-        }
+    private static void assertSingleMeasurement(
+        MeterRegistry registry
+    ) {
+        assertEquals(
+            1,
+            registry.getMeters().size()
+        );
     }
 }
