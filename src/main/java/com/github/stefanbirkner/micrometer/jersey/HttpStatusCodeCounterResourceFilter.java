@@ -60,13 +60,14 @@ final class HttpStatusCodeCounterResourceFilter implements ResourceFilter, Conta
         ContainerRequest request,
         ContainerResponse response
     ) {
-        Integer status = response.getStatus();
+        int status = response.getStatus();
 
         Counter counter = counters.get(status);
         if (counter == null) {
             Counter potentiallyNewCounter = meterRegistry.counter(
-                resourceClass.getName() + "." + metricBaseName + " " + status + " counter",
-                tags);
+                resourceClass.getName() + "." + metricBaseName + " counter",
+                tags.and("status", Integer.toString(status))
+            );
             Counter existingCounter = counters.putIfAbsent(status, potentiallyNewCounter);
             if (existingCounter != null) {
                 // we lost the race to set that counter, but shouldn't create a duplicate since Metrics.newCounter will do the right thing

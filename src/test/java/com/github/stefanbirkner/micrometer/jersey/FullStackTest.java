@@ -112,7 +112,7 @@ public class FullStackTest {
         assertEquals(
             new HashSet<>(asList(
                 "com.github.stefanbirkner.micrometer.jersey.FullStackTest$EnabledOnClass./enabledOnClass timer",
-                "com.github.stefanbirkner.micrometer.jersey.FullStackTest$EnabledOnClass./enabledOnClass 200 counter"
+                "com.github.stefanbirkner.micrometer.jersey.FullStackTest$EnabledOnClass./enabledOnClass counter"
             )),
             meterNames
         );
@@ -126,8 +126,9 @@ public class FullStackTest {
         assertTrue(timer.mean(MILLISECONDS) > 0D);
 
         Counter counter = meterRegistry.counter(
-            "com.github.stefanbirkner.micrometer.jersey.FullStackTest$EnabledOnClass./enabledOnClass 200 counter",
-            "method", "GET");
+            "com.github.stefanbirkner.micrometer.jersey.FullStackTest$EnabledOnClass./enabledOnClass counter",
+            "method", "GET",
+            "status", "200");
         assertEquals(1d, counter.count(), 0.1d);
     }
 
