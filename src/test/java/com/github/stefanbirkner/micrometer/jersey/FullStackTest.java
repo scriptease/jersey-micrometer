@@ -121,7 +121,8 @@ public class FullStackTest {
 
         Timer timer = meterRegistry.timer(
             "com.github.stefanbirkner.micrometer.jersey.FullStackTest$EnabledOnClass./enabledOnClass timer",
-            "method", "GET");
+            "method", "GET",
+            "status", "200");
         assertEquals(1, timer.count());
         assertTrue(timer.mean(MILLISECONDS) > 0D);
 

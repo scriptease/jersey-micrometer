@@ -12,6 +12,9 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 
+import static java.lang.System.currentTimeMillis;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+
 /**
  * Factory for dispatch wrappers that wrap request invocation to get timing info.
  */
@@ -52,9 +55,15 @@ final class MicrometerWrapperFactory
         Class<?> resourceClass = am.getResource().getResourceClass();
         String metricId = namer.getMeterBaseName(am);
         Tags tags = tagsProvider.tagsForMethod(am);
-        Timer timer = meterRegistry.timer(resourceClass.getName() + "." + metricId + " timer", tags);
-        return (resource, context, chain) -> timer.record(
-            () -> chain.wrapDispatch(resource, context)
-        );
+        return (resource, context, chain) -> {
+            long start = currentTimeMillis();
+            chain.wrapDispatch(resource, context);
+            long duration = currentTimeMillis() - start;
+            Timer timer = meterRegistry.timer(
+                resourceClass.getName() + "." + metricId + " timer",
+                tags.and("status", Integer.toString(context.getResponse().getStatus()))
+            );
+            timer.record(duration, MILLISECONDS);
+        };
     }
 }
