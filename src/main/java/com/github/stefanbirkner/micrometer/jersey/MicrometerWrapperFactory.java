@@ -48,26 +48,11 @@ final class MicrometerWrapperFactory
     public ResourceMethodDispatchWrapper createDispatchWrapper(
         AbstractResourceMethod am
     ) {
-        if (!enabledForMethod(am)) {
-            return null;
+        if (enabledForMethod(am)) {
+            return recordStatistics(am);
+        } else {
+            return null; //don't wrap invocation
         }
-
-        Class<?> resourceClass = am.getResource().getResourceClass();
-        String metricId = namer.getMeterBaseName(am);
-        Tags tags = tagsProvider.tagsForMethod(am);
-        return (resource, context, chain) -> {
-            long start = currentTimeMillis();
-            chain.wrapDispatch(resource, context);
-            long duration = currentTimeMillis() - start;
-            Timer timer = meterRegistry.timer(
-                resourceClass.getName() + "." + metricId,
-                tags.and(
-                    "status",
-                    Integer.toString(context.getResponse().getStatus())
-                )
-            );
-            timer.record(duration, MILLISECONDS);
-        };
     }
 
     private boolean enabledForMethod(
@@ -106,5 +91,26 @@ final class MicrometerWrapperFactory
         } else {
             return annotation.enabled();
         }
+    }
+
+    private ResourceMethodDispatchWrapper recordStatistics(
+        AbstractResourceMethod method
+    ) {
+        Class<?> resourceClass = method.getResource().getResourceClass();
+        String metricId = namer.getMeterBaseName(method);
+        Tags tags = tagsProvider.tagsForMethod(method);
+        return (resource, context, chain) -> {
+            long start = currentTimeMillis();
+            chain.wrapDispatch(resource, context);
+            long duration = currentTimeMillis() - start;
+            Timer timer = meterRegistry.timer(
+                resourceClass.getName() + "." + metricId,
+                tags.and(
+                    "status",
+                    Integer.toString(context.getResponse().getStatus())
+                )
+            );
+            timer.record(duration, MILLISECONDS);
+        };
     }
 }
