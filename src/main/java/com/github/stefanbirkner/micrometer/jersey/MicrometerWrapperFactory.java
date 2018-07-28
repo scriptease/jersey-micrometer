@@ -12,6 +12,9 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 
+import java.lang.reflect.AnnotatedElement;
+import java.util.function.Supplier;
+
 import static java.lang.System.currentTimeMillis;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -45,10 +48,7 @@ final class MicrometerWrapperFactory
     public ResourceMethodDispatchWrapper createDispatchWrapper(
         AbstractResourceMethod am
     ) {
-        EnabledState state = MetricAnnotationFeatureResolver.getState(am);
-
-        if (state == EnabledState.OFF ||
-            (state == EnabledState.UNSPECIFIED && !jerseyMicrometerConfig.isEnabledByDefault())) {
+        if (!enabledForMethod(am)) {
             return null;
         }
 
@@ -68,5 +68,43 @@ final class MicrometerWrapperFactory
             );
             timer.record(duration, MILLISECONDS);
         };
+    }
+
+    private boolean enabledForMethod(
+        AbstractResourceMethod method
+    ) {
+        return firstSpecified(
+            () -> enabled(method),
+            () -> enabled(method.getResource()),
+            jerseyMicrometerConfig::isEnabledByDefault
+        );
+    }
+
+    private boolean firstSpecified(
+        Supplier<Boolean>... enabledCheckers
+    ) {
+        for (Supplier<Boolean> checker: enabledCheckers) {
+            Boolean enabled = checker.get();
+            if (enabled != null) {
+                return enabled;
+            }
+        }
+
+        throw new IllegalArgumentException(
+            "None of the checkers provided a value for the enabled flag."
+        );
+    }
+
+    private Boolean enabled(
+        AnnotatedElement element
+    ) {
+        ResourceMetrics annotation = element.getAnnotation(
+            ResourceMetrics.class
+        );
+        if (annotation == null) {
+            return null;
+        } else {
+            return annotation.enabled();
+        }
     }
 }

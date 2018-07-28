@@ -1,0 +1,8 @@
+<FindBugsFilter>
+    <!-- we explicitly use Boolean as a tri-state here -->
+    <Match>
+        <Class name="com.github.stefanbirkner.micrometer.jersey.MicrometerWrapperFactory" />
+        <Method name="enabled" />
+        <Bug pattern="NP_BOOLEAN_RETURN_NULL" />
+    </Match>
+</FindBugsFilter>
