@@ -3,7 +3,6 @@ package com.github.stefanbirkner.micrometer.jersey;
 import com.google.inject.AbstractModule;
 import com.google.inject.servlet.GuiceFilter;
 import com.google.inject.servlet.ServletModule;
-import com.ning.http.client.AsyncHttpClient;
 import com.palominolabs.config.ConfigModule;
 import com.palominolabs.config.ConfigModuleBuilder;
 import com.palominolabs.jersey.dispatchwrapper.ResourceMethodWrappedDispatchModule;
@@ -27,8 +26,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.URL;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 
 import static com.google.inject.Guice.createInjector;
 import static java.util.Collections.singletonMap;
@@ -127,7 +126,7 @@ public class FullStackTest {
 
 
         private void sendGetRequest(
-        ) throws IOException, ExecutionException, InterruptedException {
+        ) throws IOException {
             FullStackTest.sendGetRequest(
                 "/no-class-annotation/no-method-annotation"
             );
@@ -488,11 +487,10 @@ public class FullStackTest {
 
     private static void sendGetRequest(
         String path
-    ) throws IOException, ExecutionException, InterruptedException {
-        new AsyncHttpClient()
-            .prepareGet("http://localhost:" + PORT + path)
-            .execute()
-            .get();
+    ) throws IOException {
+        new URL("http://localhost:" + PORT + path)
+            .openStream()
+            .close();
     }
 
     private static void assertNoMeasurement(
