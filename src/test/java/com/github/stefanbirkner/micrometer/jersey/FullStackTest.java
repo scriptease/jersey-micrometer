@@ -44,14 +44,14 @@ public class FullStackTest {
         private final SimpleMeterRegistry registry = new SimpleMeterRegistry();
 
         @Test
-        public void measurement_name_contains_class_and_path(
+        public void measurement_has_fixed_named(
         ) throws Exception {
             Server server = startServer();
             try {
                 sendGetRequest();
 
                 assertEquals(
-                    "com.github.stefanbirkner.micrometer.jersey.NoAnnotationOnClass./no-class-annotation/no-method-annotation",
+                    "http.server.requests",
                     getTimer().getId().getName()
                 );
             } finally {
@@ -112,6 +112,22 @@ public class FullStackTest {
                 sendGetRequest();
 
                 assertMeasurementPresentWithTag("status", "200");
+            } finally {
+                server.stop();
+            }
+        }
+
+        @Test
+        public void measurement_is_tagged_with_path(
+        ) throws Exception {
+            Server server = startServer();
+            try {
+                sendGetRequest();
+
+                assertMeasurementPresentWithTag(
+                    "uri",
+                    "/no-class-annotation/no-method-annotation"
+                );
             } finally {
                 server.stop();
             }

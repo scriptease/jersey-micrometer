@@ -46,9 +46,11 @@ then by using this library you will get a
 `get()` method. The timers have two tags:
 - `method` contains the HTTP method
 - `status` contains the response's status code
+- `uri` contains the request path
 
-In this case the tag `method` has the value `GET` and the tag `status` has the
-value `200`.
+In this example a timer with the name `http.server.requests` is used. Its tag
+`method` has the value `GET`, the tag `status` has the value `200` and the tag
+`uri` has the value `/whatever`.
 
 ### Installation
 

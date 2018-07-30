@@ -27,19 +27,16 @@ final class MicrometerWrapperFactory
 
     private final JerseyMicrometerConfig jerseyMicrometerConfig;
 
-    private final ResourceMeterNamer namer;
     private TagsProvider tagsProvider;
     private final MeterRegistry meterRegistry;
 
     @Inject
     MicrometerWrapperFactory(
         JerseyMicrometerConfig jerseyMicrometerConfig,
-        ResourceMeterNamer namer,
         TagsProvider tagsProvider,
         @JerseyResourceMicrometer MeterRegistry meterRegistry
     ) {
         this.jerseyMicrometerConfig = jerseyMicrometerConfig;
-        this.namer = namer;
         this.tagsProvider = tagsProvider;
         this.meterRegistry = meterRegistry;
     }
@@ -96,15 +93,15 @@ final class MicrometerWrapperFactory
     private ResourceMethodDispatchWrapper recordStatistics(
         AbstractResourceMethod method
     ) {
-        Class<?> resourceClass = method.getResource().getResourceClass();
-        String metricId = namer.getMeterBaseName(method);
         Tags tags = tagsProvider.tagsForMethod(method);
         return (resource, context, chain) -> {
             long start = currentTimeMillis();
             chain.wrapDispatch(resource, context);
             long duration = currentTimeMillis() - start;
             Timer timer = meterRegistry.timer(
-                resourceClass.getName() + "." + metricId,
+                //We are using the same name like Spring Boot because it makes
+                //it easier to build cross-application dashboards.
+                "http.server.requests",
                 tags.and(
                     "status",
                     Integer.toString(context.getResponse().getStatus())
