@@ -489,7 +489,6 @@ public class FullStackTest {
         return new AbstractModule() {
             @Override
             protected void configure() {
-                binder().requireExplicitBindings();
                 install(new ResourceMethodWrappedDispatchModule());
                 install(new ServletModule() {
                     @Override
