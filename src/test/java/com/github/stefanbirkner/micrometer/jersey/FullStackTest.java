@@ -3,8 +3,6 @@ package com.github.stefanbirkner.micrometer.jersey;
 import com.google.inject.AbstractModule;
 import com.google.inject.servlet.GuiceFilter;
 import com.google.inject.servlet.ServletModule;
-import com.palominolabs.config.ConfigModule;
-import com.palominolabs.config.ConfigModuleBuilder;
 import com.palominolabs.jersey.dispatchwrapper.ResourceMethodWrappedDispatchModule;
 import com.sun.jersey.guice.JerseyServletModule;
 import com.sun.jersey.guice.spi.container.servlet.GuiceContainer;
@@ -12,7 +10,6 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.search.RequiredSearch;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.apache.commons.configuration.MapConfiguration;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -30,7 +27,6 @@ import java.net.URL;
 import java.util.*;
 
 import static com.google.inject.Guice.createInjector;
-import static java.util.Collections.singletonMap;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -443,15 +439,10 @@ public class FullStackTest {
 
         private Server startServer(
         ) throws Exception {
-            Map<String, Object> config = singletonMap(
-                "com.github.stefanbirkner.micrometer.jersey.resourceMethod.enabledByDefault",
-                "false"
+            AbstractModule module = createModule(
+                registry,
+                new Configuration().disabledByDefault()
             );
-            ConfigModule configModule = new ConfigModuleBuilder()
-                .addConfiguration(new MapConfiguration(config))
-                .build();
-
-            AbstractModule module = createModule(configModule, registry);
             return startServerWithModule(module);
         }
     }
@@ -477,14 +468,14 @@ public class FullStackTest {
         MeterRegistry registry
     ) {
         return createModule(
-            new ConfigModuleBuilder().build(),
-            registry
+            registry,
+            null
         );
     }
 
     private static AbstractModule createModule(
-        ConfigModule configModule,
-        MeterRegistry registry
+        MeterRegistry registry,
+        Configuration configuration
     ) {
         return new AbstractModule() {
             @Override
@@ -503,7 +494,9 @@ public class FullStackTest {
                 bind(EnabledOnClass.class);
                 bind(NoAnnotationOnClass.class);
 
-                install(configModule);
+                if (configuration != null) {
+                    bind(Configuration.class).toInstance(configuration);
+                }
                 install(new ResourceMethodMicrometerModule());
                 bind(MeterRegistry.class)
                     .annotatedWith(JerseyResourceMicrometer.class)

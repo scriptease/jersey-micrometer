@@ -26,17 +26,15 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 final class MicrometerWrapperFactory
     implements ResourceMethodDispatchWrapperFactory
 {
-
-    private final JerseyMicrometerConfig jerseyMicrometerConfig;
-
+    private final Configuration configuration;
     private final MeterRegistry meterRegistry;
 
     @Inject
     MicrometerWrapperFactory(
-        JerseyMicrometerConfig jerseyMicrometerConfig,
+        Configuration configuration,
         @JerseyResourceMicrometer MeterRegistry meterRegistry
     ) {
-        this.jerseyMicrometerConfig = jerseyMicrometerConfig;
+        this.configuration = configuration;
         this.meterRegistry = meterRegistry;
     }
 
@@ -57,7 +55,7 @@ final class MicrometerWrapperFactory
         return firstSpecified(
             () -> enabled(method),
             () -> enabled(method.getResource()),
-            jerseyMicrometerConfig::isEnabledByDefault
+            configuration::isEnabledByDefault
         );
     }
 

@@ -59,12 +59,6 @@ The first step is to add this library's module and its prerequisites.
 - `ResourceMethodWrappedDispatchModule` is needed so that method invocation
 metrics can be captured without resorting to thread locals or other such
 unpleasantness.
-- `ConfigModuleBuilder` is used to assemble the config sources for
-[config-inject](https://github.com/palominolabs/config-inject). If you just
-want the defaults used, you need not provide any config sources, so you can just
-call build() as shown. See
-[JerseyMicrometerConfig](https://github.com/stefanbirkner/jersey-micrometer-filter/blob/master/src/main/java/com/github/stefanbirkner/micrometer/jersey/JerseyMicrometerConfig.java)
-for more.
 - We also bind a MeterRegistry instance. The binding uses a binding annotation
 because it's impolite for a library to insist on an un-qualified binding of a
 common type like MeterRegistry. This MeterRegistry instance is what will be used
@@ -78,7 +72,6 @@ protected void configure() {
 
     // required for resource method metrics
     install(new ResourceMethodWrappedDispatchModule());
-    install(new ConfigModuleBuilder().build());
 
     MetricRegistry registry = new SimpleMeterRegistry();
     bind(MeterRegistry.class).annotatedWith(JerseyResourceMicrometer.class).toInstance(registry);
@@ -88,38 +81,46 @@ protected void configure() {
 
 ### Configuration
 
-At this point, you should now be getting metrics generated for every resource
-method. If you want to use annotations to have more control, you can use
-[`@ResourceMetrics`](https://github.com/stefanbirkner/jersey-micrometer-filter/blob/master/src/main/java/com/github/stefanbirkner/micrometer/jersey/ResourceMetrics.java)
-to turn metrics off and on for a class or method. In the case below, the method
-would end up having metrics.
-```
-@Path("somewhere")
-@ResourceMetrics(enabled = false)
-public class EnabledOnClassDisabledOnMethod {
-    // method annotation overrides class annotation
-    @GET
-    @ResourceMetrics(enabled = true)
-    public String get() {
-        return "ok";
+By default metrics are collected for every resource method. You can change this
+behavior to not collecting metrics by default. Therefore you have to bind an
+instance of the
+[Configuration](https://github.com/stefanbirkner/jersey-micrometer-filter/blob/master/src/main/java/com/github/stefanbirkner/micrometer/jersey/Configuration.java)
+class where metrics are disabled by default.
+
+    bind(Configuration.class)
+        .toInstance(new Configuration().disabledByDefault());
+
+You can override the default behavior by adding the annotation
+`@ResourceMetrics` to a class or method.
+
+    @Path("somewhere")
+    public class SomeResource {
+        @GET
+        @ResourceMetrics
+        public String get() {
+            return "ok";
+        }
     }
-}
-```
 
-You can also make it so that the default is to *not* create metrics for
-un-annotated classes and methods by setting the property used in
-[JerseyMicrometerConfig](https://github.com/stefanbirkner/jersey-micrometer-filter/blob/master/src/main/java/com/github/stefanbirkner/micrometer/jersey/JerseyMicrometerConfig.java).
-You can do this via the `ConfigModuleBuilder`'s config stack. Here, we'll use a
-simple in-code Map to define properties.
+enables metrics collection for the method while
 
-```
-Map<String, Object> config = new HashMap<>();
-config.put("com.github.stefanbirkner.micrometer.jersey.resourceMethod.enabledByDefault", "false");
+    @Path("somewhere")
+    @ResourceMetrics
+    public class SomeResource {
+        @GET
+        public String get() {
+            return "ok";
+        }
+    }
 
-ConfigModuleBuilder builder = new ConfigModuleBuilder();
-// read from a map
-builder.addConfiguration(new MapConfiguration(config));
-```
+enables metrics collection for all methods of the class. You can disable metric
+collection by setting the annotation's `enabled` flag to `false`
+
+    @ResourceMetrics(enabled = false)
+
+If the annotation is present at a method and its class then the annotation at
+the method has precedence.
+
 
 ## Development Guide
 

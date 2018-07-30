@@ -5,7 +5,6 @@
 package com.github.stefanbirkner.micrometer.jersey;
 
 import com.google.inject.AbstractModule;
-import com.palominolabs.config.ConfigModule;
 
 import static com.palominolabs.jersey.dispatchwrapper.ResourceMethodWrappedDispatchModule.bindWrapperFactory;
 
@@ -14,8 +13,6 @@ public final class ResourceMethodMicrometerModule
 {
     @Override
     protected void configure() {
-        ConfigModule.bindConfigBean(binder(), JerseyMicrometerConfig.class);
-
         bindWrapperFactory(binder(), MicrometerWrapperFactory.class);
     }
 }
