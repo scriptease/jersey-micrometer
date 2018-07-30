@@ -50,12 +50,12 @@
         <dependency>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-core</artifactId>
-            <version>1.18.1</version>
+            <version>1.19.4</version>
         </dependency>
         <dependency>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-server</artifactId>
-            <version>1.18.1</version>
+            <version>1.19.4</version>
         </dependency>
         <dependency>
             <groupId>io.micrometer</groupId>
@@ -75,25 +75,25 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>[4.11]</version>
+            <version>[4.12]</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-servlet</artifactId>
-            <version>[9.2.3.v20140905]</version>
+            <version>[9.4.11.v20180605]</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.sun.jersey.contribs</groupId>
             <artifactId>jersey-guice</artifactId>
-            <version>[1.18.1]</version>
+            <version>[1.19.4]</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-servlet</artifactId>
-            <version>[1.18.1]</version>
+            <version>[1.19.4]</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
