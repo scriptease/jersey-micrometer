@@ -133,6 +133,42 @@ public class FullStackTest {
             }
         }
 
+        @Test
+        public void path_in_tag_has_no_trailing_slash(
+        ) throws Exception {
+            Server server = startServer();
+            try {
+                FullStackTest.sendGetRequest(
+                    "/no-class-annotation/with-trailing-slash"
+                );
+
+                assertMeasurementPresentWithTag(
+                    "uri",
+                    "/no-class-annotation/with-trailing-slash"
+                );
+            } finally {
+                server.stop();
+            }
+        }
+
+        @Test
+        public void path_in_tag_has_parameter_placeholder_if_present(
+        ) throws Exception {
+            Server server = startServer();
+            try {
+                FullStackTest.sendGetRequest(
+                    "/no-class-annotation/with/some-value"
+                );
+
+                assertMeasurementPresentWithTag(
+                    "uri",
+                    "/no-class-annotation/with/{parameter}"
+                );
+            } finally {
+                server.stop();
+            }
+        }
+
         private Server startServer(
         ) throws Exception {
             return FullStackTest.startServer(

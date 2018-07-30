@@ -2,6 +2,7 @@ package com.github.stefanbirkner.micrometer.jersey;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 
 @Path("no-class-annotation")
 public class NoAnnotationOnClass {
@@ -26,4 +27,21 @@ public class NoAnnotationOnClass {
         Thread.sleep(10);
         return "ok";
     }
+
+    @GET
+    @Path("with-trailing-slash/")
+    @ResourceMetrics
+    public String withTailingSlash() {
+        return "ok";
+    }
+
+    @GET
+    @Path("with/{parameter}")
+    @ResourceMetrics
+    public String withTailingSlash(
+        @PathParam("parameter") String parameter
+    ) {
+        return "ok";
+    }
+
 }

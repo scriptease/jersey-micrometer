@@ -15,8 +15,6 @@ public final class ResourceMethodMicrometerModule
     @Override
     protected void configure() {
         ConfigModule.bindConfigBean(binder(), JerseyMicrometerConfig.class);
-        bind(ResourceMeterNamer.class).to(ResourceMeterNamerImpl.class);
-        bind(TagsProvider.class);
 
         bindWrapperFactory(binder(), MicrometerWrapperFactory.class);
     }

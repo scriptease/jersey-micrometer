@@ -8,6 +8,8 @@ import com.google.inject.Inject;
 import com.palominolabs.jersey.dispatchwrapper.ResourceMethodDispatchWrapper;
 import com.palominolabs.jersey.dispatchwrapper.ResourceMethodDispatchWrapperFactory;
 import com.sun.jersey.api.model.AbstractResourceMethod;
+import com.sun.jersey.api.model.AbstractSubResourceMethod;
+import com.sun.jersey.api.model.PathValue;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
@@ -27,17 +29,14 @@ final class MicrometerWrapperFactory
 
     private final JerseyMicrometerConfig jerseyMicrometerConfig;
 
-    private TagsProvider tagsProvider;
     private final MeterRegistry meterRegistry;
 
     @Inject
     MicrometerWrapperFactory(
         JerseyMicrometerConfig jerseyMicrometerConfig,
-        TagsProvider tagsProvider,
         @JerseyResourceMicrometer MeterRegistry meterRegistry
     ) {
         this.jerseyMicrometerConfig = jerseyMicrometerConfig;
-        this.tagsProvider = tagsProvider;
         this.meterRegistry = meterRegistry;
     }
 
@@ -93,7 +92,7 @@ final class MicrometerWrapperFactory
     private ResourceMethodDispatchWrapper recordStatistics(
         AbstractResourceMethod method
     ) {
-        Tags tags = tagsProvider.tagsForMethod(method);
+        Tags tags = tagsForMethod(method);
         return (resource, context, chain) -> {
             long start = currentTimeMillis();
             chain.wrapDispatch(resource, context);
@@ -109,5 +108,56 @@ final class MicrometerWrapperFactory
             );
             timer.record(duration, MILLISECONDS);
         };
+    }
+
+    private Tags tagsForMethod(
+        AbstractResourceMethod method
+    ) {
+        return Tags.of(
+            "method", method.getHttpMethod(),
+            "uri", uri(method)
+        );
+    }
+
+    private String uri(
+        AbstractResourceMethod method
+    ) {
+
+        String metricId = getPathWithoutSurroundingSlashes(
+            method.getResource().getPath()
+        );
+
+        if (!metricId.isEmpty()) {
+            metricId = "/" + metricId;
+        }
+
+        if (method instanceof AbstractSubResourceMethod) {
+            //if this is a sub resource, add on its path component
+            AbstractSubResourceMethod asrm = (AbstractSubResourceMethod) method;
+            metricId += "/" + getPathWithoutSurroundingSlashes(asrm.getPath());
+        }
+
+        if (metricId.isEmpty()) {
+            metricId = "_no path_";
+        }
+
+        return metricId;
+    }
+
+    private String getPathWithoutSurroundingSlashes(
+        PathValue pathValue
+    ) {
+        if (pathValue == null) {
+            return "";
+        }
+        String value = pathValue.getValue();
+        if (value.startsWith("/")) {
+            value = value.substring(1);
+        }
+        if (value.endsWith("/")) {
+            value = value.substring(0, value.length() - 1);
+        }
+
+        return value;
     }
 }
