@@ -40,17 +40,17 @@
         <dependency>
             <groupId>com.palominolabs.jersey</groupId>
             <artifactId>jersey-guice-dispatch-wrapper</artifactId>
-            <version>1.0.1</version>
+            <version>[1.0.0,)</version>
         </dependency>
         <dependency>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-core</artifactId>
-            <version>1.19.4</version>
+            <version>[1.0,)</version>
         </dependency>
         <dependency>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-server</artifactId>
-            <version>1.19.4</version>
+            <version>[1.0,)</version>
         </dependency>
         <dependency>
             <groupId>io.micrometer</groupId>
@@ -60,12 +60,12 @@
         <dependency>
             <groupId>com.google.inject.extensions</groupId>
             <artifactId>guice-servlet</artifactId>
-            <version>3.0</version>
+            <version>[3.0,)</version>
         </dependency>
         <dependency>
             <groupId>com.google.inject.extensions</groupId>
             <artifactId>guice-multibindings</artifactId>
-            <version>3.0</version>
+            <version>[3.0,)</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
@@ -77,6 +77,12 @@
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-servlet</artifactId>
             <version>[9.4.11.v20180605]</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>[25.1-jre]</version>
             <scope>test</scope>
         </dependency>
         <dependency>
