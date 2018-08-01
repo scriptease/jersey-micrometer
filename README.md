@@ -25,7 +25,7 @@ Jersey Micrometer is available from
     <dependency>
       <groupId>com.github.stefanbirkner</groupId>
       <artifactId>jersey-micrometer</artifactId>
-      <version>unpublished</version>
+      <version>1.0.0</version>
     </dependency>
 
 
