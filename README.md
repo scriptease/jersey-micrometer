@@ -43,7 +43,7 @@ If you have a resource class like this:
 
 then by using this library you will get a
 [Timer](https://micrometer.io/docs/concepts#_timers) metric generated for the
-`get()` method. The timers have two tags:
+`get()` method. The timers have three tags:
 - `method` contains the HTTP method
 - `status` contains the response's status code
 - `uri` contains the request path
