@@ -94,17 +94,8 @@ final class MicrometerWrapperFactory
         return (resource, context, chain) -> {
             long start = currentTimeMillis();
             chain.wrapDispatch(resource, context);
-            long duration = currentTimeMillis() - start;
-            Timer timer = meterRegistry.timer(
-                //We are using the same name like Spring Boot because it makes
-                //it easier to build cross-application dashboards.
-                "http.server.requests",
-                tags.and(
-                    "status",
-                    Integer.toString(context.getResponse().getStatus())
-                )
-            );
-            timer.record(duration, MILLISECONDS);
+            int status = context.getResponse().getStatus();
+            record(start, tags, status);
         };
     }
 
@@ -157,5 +148,23 @@ final class MicrometerWrapperFactory
         }
 
         return value;
+    }
+
+    private void record(
+        long start,
+        Tags tags,
+        int status
+    ) {
+        long duration = currentTimeMillis() - start;
+        Timer timer = meterRegistry.timer(
+            //We are using the same name like Spring Boot because it makes
+            //it easier to build cross-application dashboards.
+            "http.server.requests",
+            tags.and(
+                "status",
+                Integer.toString(status)
+            )
+        );
+        timer.record(duration, MILLISECONDS);
     }
 }
