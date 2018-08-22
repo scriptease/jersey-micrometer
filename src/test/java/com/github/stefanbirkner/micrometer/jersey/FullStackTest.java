@@ -114,6 +114,36 @@ public class FullStackTest {
         }
 
         @Test
+        public void measurement_is_tagged_with_status_from_WebApplicationException(
+        ) throws Exception {
+            Server server = startServer();
+            try {
+                FullStackTest.sendGetRequestSafe(
+                    "/no-class-annotation/method/throws/WebApplicationException/404"
+                );
+
+                assertMeasurementPresentWithTag("status", "404");
+            } finally {
+                server.stop();
+            }
+        }
+
+        @Test
+        public void measurement_is_tagged_with_status_unknown_for_arbitrary_Exception(
+        ) throws Exception {
+            Server server = startServer();
+            try {
+                FullStackTest.sendGetRequestSafe(
+                    "/no-class-annotation/method/throws/Exception"
+                );
+
+                assertMeasurementPresentWithTag("status", "unknown");
+            } finally {
+                server.stop();
+            }
+        }
+
+        @Test
         public void measurement_is_tagged_with_path(
         ) throws Exception {
             Server server = startServer();
@@ -535,6 +565,15 @@ public class FullStackTest {
         new URL("http://localhost:" + PORT + path)
             .openStream()
             .close();
+    }
+
+    private static void sendGetRequestSafe(
+        String path
+    ) throws IOException {
+        try {
+            sendGetRequest(path);
+        } catch (Exception ignored) {
+        }
     }
 
     private static void assertNoMeasurement(

@@ -3,6 +3,7 @@ package com.github.stefanbirkner.micrometer.jersey;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.WebApplicationException;
 
 @Path("no-class-annotation")
 public class NoAnnotationOnClass {
@@ -44,4 +45,18 @@ public class NoAnnotationOnClass {
         return "ok";
     }
 
+    @GET
+    @Path("method/throws/WebApplicationException/404")
+    @ResourceMetrics
+    public String throwsWebApplicationException() {
+        throw new WebApplicationException(404);
+    }
+
+    @GET
+    @Path("method/throws/Exception")
+    @ResourceMetrics
+    public String throwsException(
+    ) throws Exception {
+        throw new Exception();
+    }
 }

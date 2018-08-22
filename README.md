@@ -25,7 +25,7 @@ Jersey Micrometer is available from
     <dependency>
       <groupId>com.github.stefanbirkner</groupId>
       <artifactId>jersey-micrometer</artifactId>
-      <version>1.0.0</version>
+      <version>1.0.1</version>
     </dependency>
 
 
@@ -51,6 +51,10 @@ then by using this library you will get a
 In this example a timer with the name `http.server.requests` is used. Its tag
 `method` has the value `GET`, the tag `status` has the value `200` and the tag
 `uri` has the value `/whatever`.
+
+When the method throws an `WebApplicationException` then the status of the
+exception is used. If it throws another type of exception then the metric has
+the status "unknown".
 
 ### Installation
 
