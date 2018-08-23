@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2012 Palomino Labs, Inc.
- */
-
 package com.github.stefanbirkner.micrometer.jersey;
 
 import com.google.inject.Inject;
