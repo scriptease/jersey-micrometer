@@ -2,7 +2,9 @@ package com.github.stefanbirkner.micrometer.jersey;
 
 import com.google.inject.Inject;
 import com.palominolabs.jersey.dispatchwrapper.ResourceMethodDispatchWrapper;
+import com.palominolabs.jersey.dispatchwrapper.ResourceMethodDispatchWrapperChain;
 import com.palominolabs.jersey.dispatchwrapper.ResourceMethodDispatchWrapperFactory;
+import com.sun.jersey.api.core.HttpContext;
 import com.sun.jersey.api.model.AbstractResourceMethod;
 import com.sun.jersey.api.model.AbstractSubResourceMethod;
 import com.sun.jersey.api.model.PathValue;
@@ -89,8 +91,7 @@ final class MicrometerWrapperFactory
         Tags tags = tagsForMethod(method);
         return (resource, context, chain) -> {
             long start = currentTimeMillis();
-            chain.wrapDispatch(resource, context);
-            int status = context.getResponse().getStatus();
+            int status = handleRequest(resource, context, chain);
             record(start, tags, status);
         };
     }
@@ -144,6 +145,15 @@ final class MicrometerWrapperFactory
         }
 
         return value;
+    }
+
+    private int handleRequest(
+        Object resource,
+        HttpContext context,
+        ResourceMethodDispatchWrapperChain chain
+    ) {
+        chain.wrapDispatch(resource, context);
+        return context.getResponse().getStatus();
     }
 
     private void record(
