@@ -15,6 +15,7 @@ import io.micrometer.core.instrument.Timer;
 
 import javax.ws.rs.WebApplicationException;
 import java.lang.reflect.AnnotatedElement;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import static java.lang.System.currentTimeMillis;
@@ -93,8 +94,12 @@ final class MicrometerWrapperFactory
         Tags tags = tagsForMethod(method);
         return (resource, context, chain) -> {
             long start = currentTimeMillis();
-            Integer status = handleRequest(resource, context, chain);
-            record(start, tags, status);
+            handleRequest(
+                resource,
+                context,
+                chain,
+                status -> record(start, tags, status)
+            );
         };
     }
 
@@ -149,21 +154,27 @@ final class MicrometerWrapperFactory
         return value;
     }
 
-    private Integer handleRequest(
+    private void handleRequest(
         Object resource,
         HttpContext context,
-        ResourceMethodDispatchWrapperChain chain
+        ResourceMethodDispatchWrapperChain chain,
+        Consumer<Integer> timer
     ) {
         try {
             chain.wrapDispatch(resource, context);
-            return context.getResponse().getStatus();
+            int status = context.getResponse().getStatus();
+            timer.accept(status);
         } catch (MappableContainerException e) {
             Throwable cause = e.getCause();
             if (cause instanceof WebApplicationException) {
-                return ((WebApplicationException) cause).getResponse().getStatus();
+                int status = ((WebApplicationException) cause)
+                    .getResponse()
+                    .getStatus();
+                timer.accept(status);
             } else {
-                return null;
+                timer.accept(null);
             }
+            throw e;
         }
     }
 

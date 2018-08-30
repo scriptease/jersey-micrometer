@@ -23,6 +23,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.*;
 
@@ -477,6 +478,62 @@ public class FullStackTest {
         }
     }
 
+    public static class response_status {
+        private final SimpleMeterRegistry registry = new SimpleMeterRegistry();
+
+        @Test
+        public void response_has_status_returned_by_method_when_no_exception_is_thrown(
+        ) throws Exception {
+            Server server = startServer();
+            try {
+                int status = FullStackTest.sendGetRequest(
+                    "/no-class-annotation/no-method-annotation"
+                );
+
+                assertEquals(status, 200);
+            } finally {
+                server.stop();
+            }
+        }
+
+        @Test
+        public void response_has_status_of_WebApplicationException_when_thrown(
+        ) throws Exception {
+            Server server = startServer();
+            try {
+                int status = FullStackTest.sendGetRequest(
+                    "/no-class-annotation/method/throws/WebApplicationException/404"
+                );
+
+                assertEquals(status, 404);
+            } finally {
+                server.stop();
+            }
+        }
+
+        @Test
+        public void response_has_status_500_when_an_arbitrary_exception_is_thrown(
+        ) throws Exception {
+            Server server = startServer();
+            try {
+                int status = FullStackTest.sendGetRequest(
+                    "/no-class-annotation/method/throws/Exception"
+                );
+
+                assertEquals(status, 500);
+            } finally {
+                server.stop();
+            }
+        }
+
+        private Server startServer(
+        ) throws Exception {
+            return FullStackTest.startServer(
+                registry
+            );
+        }
+    }
+
     private static Server startServer(
         MeterRegistry registry
     ) throws Exception {
@@ -559,15 +616,12 @@ public class FullStackTest {
         return server;
     }
 
-    private static void sendGetRequest(
+    private static int sendGetRequest(
         String path
     ) throws IOException {
-        try {
-            new URL("http://localhost:" + PORT + path)
-                .openStream()
-                .close();
-        } catch (Exception ignored) {
-        }
+        URL url = new URL("http://localhost:" + PORT + path);
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        return connection.getResponseCode();
     }
 
     private static void assertNoMeasurement(
