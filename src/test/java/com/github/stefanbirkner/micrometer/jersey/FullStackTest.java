@@ -118,7 +118,7 @@ public class FullStackTest {
         ) throws Exception {
             Server server = startServer();
             try {
-                FullStackTest.sendGetRequestSafe(
+                FullStackTest.sendGetRequest(
                     "/no-class-annotation/method/throws/WebApplicationException/404"
                 );
 
@@ -133,7 +133,7 @@ public class FullStackTest {
         ) throws Exception {
             Server server = startServer();
             try {
-                FullStackTest.sendGetRequestSafe(
+                FullStackTest.sendGetRequest(
                     "/no-class-annotation/method/throws/Exception"
                 );
 
@@ -562,16 +562,10 @@ public class FullStackTest {
     private static void sendGetRequest(
         String path
     ) throws IOException {
-        new URL("http://localhost:" + PORT + path)
-            .openStream()
-            .close();
-    }
-
-    private static void sendGetRequestSafe(
-        String path
-    ) throws IOException {
         try {
-            sendGetRequest(path);
+            new URL("http://localhost:" + PORT + path)
+                .openStream()
+                .close();
         } catch (Exception ignored) {
         }
     }
