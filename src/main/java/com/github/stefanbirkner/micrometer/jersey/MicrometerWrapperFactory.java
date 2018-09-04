@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import com.palominolabs.jersey.dispatchwrapper.ResourceMethodDispatchWrapper;
 import com.palominolabs.jersey.dispatchwrapper.ResourceMethodDispatchWrapperChain;
 import com.palominolabs.jersey.dispatchwrapper.ResourceMethodDispatchWrapperFactory;
+import com.sun.jersey.api.container.MappableContainerException;
 import com.sun.jersey.api.core.HttpContext;
 import com.sun.jersey.api.model.AbstractResourceMethod;
 import com.sun.jersey.api.model.AbstractSubResourceMethod;
@@ -12,6 +13,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 
+import javax.ws.rs.WebApplicationException;
 import java.lang.reflect.AnnotatedElement;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -158,8 +160,13 @@ final class MicrometerWrapperFactory
         ResourceMethodDispatchWrapperChain chain,
         Consumer<Integer> timer
     ) {
-        chain.wrapDispatch(resource, context);
-        recordSuccessfulDispatch(context, timer);
+        try {
+            chain.wrapDispatch(resource, context);
+            recordSuccessfulDispatch(context, timer);
+        } catch (MappableContainerException e) {
+            recordFailedDispatch(e, timer);
+            throw e;
+        }
     }
 
     private void recordSuccessfulDispatch(
@@ -170,10 +177,30 @@ final class MicrometerWrapperFactory
         timer.accept(status);
     }
 
+    private void recordFailedDispatch(
+        MappableContainerException e,
+        Consumer<Integer> timer
+    ) {
+        Integer status = statusForException(e);
+        timer.accept(status);
+    }
+
+    private Integer statusForException(
+        MappableContainerException e
+    ) {
+        if (e.getCause() instanceof WebApplicationException) {
+            return ((WebApplicationException) e.getCause())
+                .getResponse()
+                .getStatus();
+        } else {
+            return null;
+        }
+    }
+
     private void record(
         long start,
         Tags tags,
-        int status
+        Integer status
     ) {
         long duration = currentTimeMillis() - start;
         Timer timer = meterRegistry.timer(
@@ -182,7 +209,7 @@ final class MicrometerWrapperFactory
             "http.server.requests",
             tags.and(
                 "status",
-                Integer.toString(status)
+                status == null ? "unknown" : status.toString()
             )
         );
         timer.record(duration, MILLISECONDS);
