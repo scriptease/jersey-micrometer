@@ -2,7 +2,9 @@ package com.github.stefanbirkner.micrometer.jersey;
 
 import com.google.inject.Inject;
 import com.palominolabs.jersey.dispatchwrapper.ResourceMethodDispatchWrapper;
+import com.palominolabs.jersey.dispatchwrapper.ResourceMethodDispatchWrapperChain;
 import com.palominolabs.jersey.dispatchwrapper.ResourceMethodDispatchWrapperFactory;
+import com.sun.jersey.api.core.HttpContext;
 import com.sun.jersey.api.model.AbstractResourceMethod;
 import com.sun.jersey.api.model.AbstractSubResourceMethod;
 import com.sun.jersey.api.model.PathValue;
@@ -11,6 +13,7 @@ import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 
 import java.lang.reflect.AnnotatedElement;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import static java.lang.System.currentTimeMillis;
@@ -89,9 +92,12 @@ final class MicrometerWrapperFactory
         Tags tags = tagsForMethod(method);
         return (resource, context, chain) -> {
             long start = currentTimeMillis();
-            chain.wrapDispatch(resource, context);
-            int status = context.getResponse().getStatus();
-            record(start, tags, status);
+            handleRequest(
+                resource,
+                context,
+                chain,
+                status -> record(start, tags, status)
+            );
         };
     }
 
@@ -144,6 +150,17 @@ final class MicrometerWrapperFactory
         }
 
         return value;
+    }
+
+    private void handleRequest(
+        Object resource,
+        HttpContext context,
+        ResourceMethodDispatchWrapperChain chain,
+        Consumer<Integer> timer
+    ) {
+        chain.wrapDispatch(resource, context);
+        int status = context.getResponse().getStatus();
+        timer.accept(status);
     }
 
     private void record(
