@@ -159,6 +159,13 @@ final class MicrometerWrapperFactory
         Consumer<Integer> timer
     ) {
         chain.wrapDispatch(resource, context);
+        recordSuccessfulDispatch(context, timer);
+    }
+
+    private void recordSuccessfulDispatch(
+        HttpContext context,
+        Consumer<Integer> timer
+    ) {
         int status = context.getResponse().getStatus();
         timer.accept(status);
     }
