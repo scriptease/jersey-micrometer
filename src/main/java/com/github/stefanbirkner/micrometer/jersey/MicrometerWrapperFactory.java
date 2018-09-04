@@ -165,16 +165,23 @@ final class MicrometerWrapperFactory
             int status = context.getResponse().getStatus();
             timer.accept(status);
         } catch (MappableContainerException e) {
-            Throwable cause = e.getCause();
-            if (cause instanceof WebApplicationException) {
-                int status = ((WebApplicationException) cause)
-                    .getResponse()
-                    .getStatus();
-                timer.accept(status);
-            } else {
-                timer.accept(null);
-            }
+            recordFailedDispatch(e, timer);
             throw e;
+        }
+    }
+
+    private void recordFailedDispatch(
+        MappableContainerException e,
+        Consumer<Integer> timer
+    ) {
+        Throwable cause = e.getCause();
+        if (cause instanceof WebApplicationException) {
+            int status = ((WebApplicationException) cause)
+                .getResponse()
+                .getStatus();
+            timer.accept(status);
+        } else {
+            timer.accept(null);
         }
     }
 
