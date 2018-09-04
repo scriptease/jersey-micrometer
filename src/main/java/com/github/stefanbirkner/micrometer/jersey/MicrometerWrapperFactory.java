@@ -162,12 +162,19 @@ final class MicrometerWrapperFactory
     ) {
         try {
             chain.wrapDispatch(resource, context);
-            int status = context.getResponse().getStatus();
-            timer.accept(status);
+            recordSuccessfulDispatch(context, timer);
         } catch (MappableContainerException e) {
             recordFailedDispatch(e, timer);
             throw e;
         }
+    }
+
+    private void recordSuccessfulDispatch(
+        HttpContext context,
+        Consumer<Integer> timer
+    ) {
+        int status = context.getResponse().getStatus();
+        timer.accept(status);
     }
 
     private void recordFailedDispatch(
