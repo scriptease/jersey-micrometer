@@ -25,7 +25,7 @@ public class Configuration {
      * @return {@code true} iff monitoring is enabled by default for each
      * resource method.
      */
-    boolean isEnabledByDefault() {
+    public boolean isEnabledByDefault() {
         return enabledByDefault;
     }
 
@@ -35,7 +35,7 @@ public class Configuration {
      * @return a new {@code Configuration} instance.
      * @see Configuration#Configuration()
      */
-    Configuration disabledByDefault() {
+    public Configuration disabledByDefault() {
         return new Configuration(false);
     }
 }

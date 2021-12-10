@@ -56,6 +56,8 @@ final class MicrometerWrapperFactory
         return firstSpecified(
             () -> enabled(method),
             () -> enabled(method.getResource()),
+            // Make it work if the resource class is enhanced by guice
+            () -> enabled(method.getResource().getResourceClass().getSuperclass()),
             configuration::isEnabledByDefault
         );
     }
